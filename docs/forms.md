@@ -23,7 +23,7 @@ The gold schema heocr-eval approved on 2026-11-25.
 
 ## Field/value F1
 
-- **Matching** is one-to-one within each form. A Hungarian assignment first takes the pairs whose normalised label and value are both exact (weight 2 plus label similarity), then pairs by label similarity alone (`2·LCS / (|a| + |b|)`). This way, two fields with the same label, such as two dates, never take each other's exact match.
+- **Matching** is one-to-one within each form, by a Hungarian assignment on a lexicographic key: first the number of exact pairs (normalised label and value both exact), then the summed label similarity (`2·LCS / (|a| + |b|)`). The weight of a pair is `W·[exact] + similarity`, with `W = (gold fields in the form) + 1`. Because `W` exceeds any possible similarity total, no set of similar-label pairs can outweigh an exact pair, and the matched count is the maximum number of exact pairs.
 - **A match counts** only when the normalised label and value are both exact.
 - **Precision, recall and F1** use matched, gold and predicted counts summed over all documents:
   - precision = matched / predicted;

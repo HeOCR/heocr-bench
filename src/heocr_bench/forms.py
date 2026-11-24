@@ -67,9 +67,11 @@ def field_counts(gold, pred):
     g, p = fields(gold), fields(pred)
     if not g or not p:
         return {"gold_fields": len(g), "pred_fields": len(p), "matched": 0}
-    # exact (label, value) pairs first (weight 2 + similarity), then label similarity alone: duplicate labels
-    # ("date" twice) never steal an exact match from each other
-    w = [[(2.0 if a == b else 0.0) + Indel.normalized_similarity(a[0], b[0]) for b in p] for a in g]
+    # Lexicographic: the number of exact (label, value) pairs first, then summed label similarity. The exact bonus
+    # W = len(g) + 1 exceeds any possible similarity total (at most min(len(g), len(p)) <= len(g)), so no set of
+    # similar-label pairs can outweigh one exact pair.
+    big = len(g) + 1.0
+    w = [[(big if a == b else 0.0) + Indel.normalized_similarity(a[0], b[0]) for b in p] for a in g]
     pairs = _assign(w)
     matched = sum(1 for i, j in pairs.items() if g[i] == p[j])
     return {"gold_fields": len(g), "pred_fields": len(p), "matched": matched}
