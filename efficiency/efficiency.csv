@@ -1,15 +1,18 @@
-reader_id,platform,execution,status,pages,repetitions,pages_per_minute,peak_rss_mib,marginal_usd_per_1000,runner_hours_per_1000,runner_usd_per_1000,api_input_usd_per_million,api_output_usd_per_million
-tessdata-best,m4-cpu,native-tesseract,measured,65,1,95.0878,137.56,0,0.175277,,,
-tessdata-best,github-ubuntu-cpu,native-tesseract,measured,65,3,76.4138,109.45,0,0.218111,0.07852,,
-tessdata-fast,m4-cpu,native-tesseract,measured,65,1,121.2024,107.98,0,0.137511,,,
-tessdata-fast,github-ubuntu-cpu,native-tesseract,measured,65,3,100.5861,101.64,0,0.165695,0.05965,,
-rivok-full,m4-cpu,native-tesseract,measured,65,1,60.4413,145.47,0,0.27575,,,
-rivok-full,github-ubuntu-cpu,native-tesseract,measured,65,3,57.8193,118.74,0,0.288255,0.103772,,
-rivok-lite,m4-cpu,native-tesseract,measured,65,1,111.7535,125.67,0,0.149138,,,
-rivok-lite,github-ubuntu-cpu,native-tesseract,measured,65,3,96.402,104.51,0,0.172887,0.062239,,
-paddle,m4-cpu,onnx-cpu,measured-cpu-variant,65,1,17.2301,1803.0,0,0.967299,,,
-paddle,github-ubuntu-cpu,onnx-cpu,measured-cpu-variant,65,3,10.466,1338.53,0,1.592454,0.573283,,
-gemini-vertex-v0,m4-cpu,vertex-global-https,list-price-only,,,,,,,,0.75,3.75
-gemini-vertex-v0,github-ubuntu-cpu,vertex-global-https,list-price-only,,,,,,,,0.75,3.75
-router-v2,m4-cpu,2-image-workers,measured,65,1,20.1469,750.47,0,0.827255,,,
-router-v2,github-ubuntu-cpu,2-image-workers,measured,65,1,12.5943,387.89,0,1.323346,0.476405,,
+reader_id,platform,execution,status,pages,repetitions,pages_per_minute,peak_rss_mib,marginal_usd_per_1000,runner_hours_per_1000,runner_usd_per_1000,api_input_usd_per_million,api_output_usd_per_million,api_usd_per_1000_units,api_registration,api_pages_per_minute,api_mean_request_latency_seconds,api_timed_pages,api_timing_scope,api_timing_label
+tessdata-best,m4-cpu,native-tesseract,measured,65,1,95.0878,137.56,0,0.175277,,,,,,,,,,
+tessdata-best,github-ubuntu-cpu,native-tesseract,measured,65,3,76.4138,109.45,0,0.218111,0.07852,,,,,,,,,
+tessdata-fast,m4-cpu,native-tesseract,measured,65,1,121.2024,107.98,0,0.137511,,,,,,,,,,
+tessdata-fast,github-ubuntu-cpu,native-tesseract,measured,65,3,100.5861,101.64,0,0.165695,0.05965,,,,,,,,,
+rivok-full,m4-cpu,native-tesseract,measured,65,1,60.4413,145.47,0,0.27575,,,,,,,,,,
+rivok-full,github-ubuntu-cpu,native-tesseract,measured,65,3,57.8193,118.74,0,0.288255,0.103772,,,,,,,,,
+rivok-lite,m4-cpu,native-tesseract,measured,65,1,111.7535,125.67,0,0.149138,,,,,,,,,,
+rivok-lite,github-ubuntu-cpu,native-tesseract,measured,65,3,96.402,104.51,0,0.172887,0.062239,,,,,,,,,
+paddle,m4-cpu,onnx-cpu,measured-cpu-variant,65,1,17.2301,1803.0,0,0.967299,,,,,,,,,,
+paddle,github-ubuntu-cpu,onnx-cpu,measured-cpu-variant,65,3,10.466,1338.53,0,1.592454,0.573283,,,,,,,,,
+gemini-vertex-v0,registered-api,vertex-global-https,list-price-only,65,1,,,,,,0.75,3.75,,#727,,,,,"from registered run; network-bound, not comparable to local CPU"
+google-vision-document-text-v0,registered-api,vision-document-text-detection,registered-cost-only,65,1,,,1.500000,,,,,1.50,#732,,,,,"from registered run; network-bound, not comparable to local CPU"
+google-document-ai-ocr-v21-v0,registered-api,document-ai-enterprise-ocr,registered-cost-only,65,1,,,1.500000,,,,,1.50,#735,,,,,"from registered run; network-bound, not comparable to local CPU"
+claude-haiku-5-5-v0,registered-api,anthropic-message-batch,registered-cost-only,65,1,,,0.458222,,,0.05,0.25,,#732,,,,,"from registered run; network-bound, not comparable to local CPU"
+claude-haiku-4-5-v0,registered-api,anthropic-message-batch,registered-cost-only,65,1,,,4.629431,,,0.50,2.50,,#732,,,,,"from registered run; network-bound, not comparable to local CPU"
+router-v2,m4-cpu,2-image-workers,measured,65,1,20.1469,750.47,0,0.827255,,,,,,,,,,
+router-v2,github-ubuntu-cpu,2-image-workers,measured,65,1,12.5943,387.89,0,1.323346,0.476405,,,,,,,,,

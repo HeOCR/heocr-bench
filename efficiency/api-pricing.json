@@ -1,13 +1,36 @@
 {
-  "reader_id": "gemini-vertex-v0",
-  "model": "gemini-3.8-flash",
-  "region": "global",
-  "request_tier": "standard",
-  "currency": "USD",
   "checked": "2026-11-24",
-  "valid_through": "2026-12-31",
-  "input_usd_per_million": 0.75,
-  "output_usd_per_million": 3.75,
-  "output_includes_reasoning": true,
-  "source": "https://cloud.google.com/gemini-enterprise-agent-platform/generative-ai/pricing"
+  "currency": "USD",
+  "readers": {
+    "gemini-vertex-v0": {
+      "basis": "Vertex global standard introductory pricing through December 31, 2026",
+      "source": "https://cloud.google.com/model-garden/pricing",
+      "denominator": 1000000,
+      "rates": {"input_tokens": 0.75, "output_tokens": 3.75, "reasoning_tokens": 3.75}
+    },
+    "claude-haiku-4-5-v0": {
+      "basis": "Anthropic Message Batches",
+      "source": "https://platform.claude.com/docs/en/about-claude/pricing",
+      "denominator": 1000000,
+      "rates": {"input_tokens": 0.50, "output_tokens": 2.50}
+    },
+    "claude-haiku-5-5-v0": {
+      "basis": "Anthropic Message Batches for prompts up to 100,000 tokens",
+      "source": "https://platform.claude.com/docs/en/about-claude/pricing",
+      "denominator": 1000000,
+      "rates": {"input_tokens": 0.05, "output_tokens": 0.25}
+    },
+    "google-vision-document-text-v0": {
+      "basis": "Document Text Detection first paid tier, before free quota and credits",
+      "source": "https://cloud.google.com/vision/pricing",
+      "denominator": 1000,
+      "rates": {"units": 1.50}
+    },
+    "google-document-ai-ocr-v21-v0": {
+      "basis": "Enterprise Document OCR first paid tier, before free quota and credits",
+      "source": "https://cloud.google.com/document-ai/pricing",
+      "denominator": 1000,
+      "rates": {"units": 1.50}
+    }
+  }
 }
