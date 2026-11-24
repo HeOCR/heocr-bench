@@ -1,0 +1,13 @@
+reader_id,platform,execution,status,pages,repetitions,pages_per_minute,peak_rss_mib,marginal_usd_per_1000,runner_hours_per_1000,runner_usd_per_1000
+tessdata-best,m4-cpu,native-tesseract,pending,,,,,,,
+tessdata-best,github-ubuntu-cpu,native-tesseract,pending,,,,,,,
+tessdata-fast,m4-cpu,native-tesseract,pending,,,,,,,
+tessdata-fast,github-ubuntu-cpu,native-tesseract,pending,,,,,,,
+rivok-full,m4-cpu,native-tesseract,pending,,,,,,,
+rivok-full,github-ubuntu-cpu,native-tesseract,pending,,,,,,,
+rivok-lite,m4-cpu,native-tesseract,pending,,,,,,,
+rivok-lite,github-ubuntu-cpu,native-tesseract,pending,,,,,,,
+paddle,m4-cpu,onnx-cpu,pending,,,,,,,
+paddle,github-ubuntu-cpu,onnx-cpu,pending,,,,,,,
+gemini-vertex-v0,m4-cpu,vertex-global-https,list-price-only,,,,,,,
+gemini-vertex-v0,github-ubuntu-cpu,vertex-global-https,list-price-only,,,,,,,

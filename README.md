@@ -54,6 +54,11 @@ one sequence element and is sensitive to line breaks. Line CER needs
 verified line joins, which v0 lacks. Filtered line error rate is unavailable
 because the mask is projected at the character level.
 
+## Efficiency
+
+The [v0 efficiency benchmark](efficiency/README.md) measures pages per minute,
+peak RSS and cost on the public image panel separately from accuracy.
+
 ## Baseline replay
 
 Place the released baseline submission directories directly under

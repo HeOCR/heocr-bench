@@ -2,12 +2,6 @@ name: v0 efficiency
 
 on:
   workflow_dispatch:
-  push:
-    branches: [pipeline/v0-efficiency]
-    paths:
-      - .github/workflows/efficiency.yml
-      - efficiency/*.py
-      - efficiency/requirements*.txt
 
 permissions:
   contents: read

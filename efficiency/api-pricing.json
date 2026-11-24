@@ -1,0 +1,13 @@
+{
+  "reader_id": "gemini-vertex-v0",
+  "model": "gemini-3.8-flash",
+  "region": "global",
+  "request_tier": "standard",
+  "currency": "USD",
+  "checked": "2026-11-24",
+  "valid_through": "2026-12-31",
+  "input_usd_per_million": 0.75,
+  "output_usd_per_million": 3.75,
+  "output_includes_reasoning": true,
+  "source": "https://cloud.google.com/gemini-enterprise-agent-platform/generative-ai/pricing"
+}
