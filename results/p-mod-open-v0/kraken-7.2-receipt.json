@@ -1,0 +1,9 @@
+{
+  "aggregate_sha256": "48ae847f9f03d8701ac72f591ea5e6e40179dab0ebbce843afc0b85c4d98d61a",
+  "carriers": 65,
+  "freeze_sha256": "134dde98e2967e9b00916e7075456691b7b4e09a19bd11243bdd613039a7f727",
+  "run_receipt_sha256": "79f9994ee208f8af6b1b51ad3719c3f29d47d422d179cc07922d673542680fc0",
+  "status": "COMPLETE",
+  "submission_checksums_sha256": "adcb1c9708c0acdbf9dc6c98b27cdc3cc0c1e881ec4da7bde13e8d82c242c52b",
+  "submission_files": 66
+}

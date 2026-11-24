@@ -54,6 +54,11 @@ one sequence element and is sensitive to line breaks. Line CER needs
 verified line joins, which v0 lacks. Filtered line error rate is unavailable
 because the mask is projected at the character level.
 
+## Comparator results
+
+The [C1 v0 comparator register](results/p-mod-open-v0/README.md) records additional
+local held-out results, exact run receipts and outstanding comparator coverage.
+
 ## Baseline replay
 
 Place the released baseline submission directories directly under
