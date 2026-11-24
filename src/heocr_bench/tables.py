@@ -9,6 +9,9 @@ Table format (``heocr_table.v1``)::
     {"rows": 3, "cols": 2, "header_rows": 1, "direction": "rtl",
      "cells": [{"r": 0, "c": 0, "rowspan": 1, "colspan": 2, "text": "..."}, ...]}
 
+A cell may carry ``"mask": true``: its text is excluded from scoring (the
+cell's position and spans still count). See docs/tables.md.
+
 ``c`` is the logical column index: column 0 is the first column in reading
 order, so in a right-to-left table it is the rightmost one on the page. The
 scorers never mirror a table; a prediction written in visual left-to-right
@@ -32,7 +35,7 @@ def cell_text(text):
 def load_table(obj):
     """Validate a table dict and return (rows, cols, header_rows, cells).
 
-    ``cells`` is a list of (r, c, rowspan, colspan, text) tuples with
+    ``cells`` is a list of (r, c, rowspan, colspan, text, masked) tuples with
     normalised text, sorted by (r, c), with uncovered positions filled.
     """
     rows, cols = int(obj["rows"]), int(obj["cols"])
@@ -51,12 +54,15 @@ def load_table(obj):
                 if owner[i][j] is not None:
                     raise ValueError(f"cells overlap at ({i}, {j})")
                 owner[i][j] = len(cells)
-        cells.append((r, c, rs, cs, cell_text(cell.get("text", ""))))
+        masked = cell.get("mask", False)
+        if type(masked) is not bool:
+            raise ValueError("mask must be a boolean")
+        cells.append((r, c, rs, cs, cell_text(cell.get("text", "")), masked))
     for i in range(rows):
         for j in range(cols):
             if owner[i][j] is None:
                 owner[i][j] = len(cells)
-                cells.append((i, j, 1, 1, ""))
+                cells.append((i, j, 1, 1, "", False))
     cells.sort(key=lambda x: (x[0], x[1]))
     return rows, cols, header_rows, cells
 
@@ -65,12 +71,13 @@ def load_table(obj):
 
 
 class _Node:
-    __slots__ = ("label", "text", "children")
+    __slots__ = ("label", "text", "children", "masked")
 
-    def __init__(self, label, text="", children=None):
+    def __init__(self, label, text="", children=None, masked=False):
         self.label = label
         self.text = text
         self.children = children or []
+        self.masked = masked
 
 
 def _tree(table):
@@ -82,8 +89,8 @@ def _tree(table):
     """
     rows, _cols, header_rows, cells = load_table(table)
     trs = [_Node("tr") for _ in range(rows)]
-    for r, _c, rs, cs, text in cells:
-        trs[r].children.append(_Node(f"td:{rs}:{cs}", text))
+    for r, _c, rs, cs, text, masked in cells:
+        trs[r].children.append(_Node(f"td:{rs}:{cs}", text, masked=masked))
     parts = []
     if header_rows:
         parts.append(_Node("thead", children=trs[:header_rows]))
@@ -111,7 +118,7 @@ def _postorder(root):
 def _rename_cost(a, b, content):
     if a.label != b.label:
         return 1.0
-    if not content or not a.label.startswith("td"):
+    if not content or not a.label.startswith("td") or a.masked or b.masked:
         return 0.0
     if not a.text and not b.text:
         return 0.0
@@ -164,17 +171,19 @@ def teds(gold, pred, content=True):
 def _grid(table, kind):
     rows, cols, _h, cells = load_table(table)
     grid = [[None] * cols for _ in range(rows)]
-    for r, c, rs, cs, text in cells:
+    for r, c, rs, cs, text, masked in cells:
         for i in range(r, r + rs):
             for j in range(c, c + cs):
                 if kind == "con":
-                    grid[i][j] = text
+                    grid[i][j] = None if masked else text
                 else:  # the parent cell's box relative to this position
                     grid[i][j] = (c - j, r - i, c + cs - j, r + rs - i)
     return grid
 
 
 def _sim_con(a, b):
+    if a is None or b is None:  # a masked gold position matches any text
+        return 1.0
     if not a and not b:
         return 1.0
     return Indel.normalized_similarity(a, b)  # 2*LCS / (|a| + |b|)
@@ -245,11 +254,129 @@ def grits(gold, pred, kind="con"):
 
 
 def exact_match(gold, pred):
-    """True when shape, header rows, spans and normalised cell texts all agree."""
-    return load_table(gold) == load_table(pred)
+    """True when shape, header rows, spans and normalised unmasked cell texts all agree."""
+    g, p = load_table(gold), load_table(pred)
+    if g[:3] != p[:3] or len(g[3]) != len(p[3]):
+        return False
+    for a, b in zip(g[3], p[3]):
+        if a[:4] != b[:4] or (not a[5] and a[4] != b[4]):
+            return False
+    return True
 
 
 def score_table(gold, pred):
     return {"teds": teds(gold, pred), "teds_struct": teds(gold, pred, content=False),
             "grits_con": grits(gold, pred, "con"), "grits_top": grits(gold, pred, "top"),
             "exact": exact_match(gold, pred)}
+
+
+# ---------------------------------------------------------------- documents and pooling
+
+METRICS = ("teds", "teds_struct", "grits_con", "grits_top", "exact")
+ZERO = {"teds": 0.0, "teds_struct": 0.0, "grits_con": 0.0, "grits_top": 0.0, "exact": False}
+
+
+def _pages(t):
+    pages = t.get("pages")
+    return None if pages is None else set(range(int(pages[0]), int(pages[1]) + 1))
+
+
+def _assign(weights):
+    """Maximum-weight assignment (Hungarian, O(n^3)) on a rectangular matrix.
+
+    Returns {row: col}. Ties resolve to the lowest indices, deterministically.
+    """
+    n_r = len(weights)
+    n_c = len(weights[0]) if n_r else 0
+    n = max(n_r, n_c)
+    if n == 0:
+        return {}
+    big = max((w for row in weights for w in row), default=0.0)
+    cost = [[(big - weights[i][j]) if i < n_r and j < n_c else big for j in range(n)] for i in range(n)]
+    u, v, p, way = [0.0] * (n + 1), [0.0] * (n + 1), [0] * (n + 1), [0] * (n + 1)
+    for i in range(1, n + 1):
+        p[0], j0 = i, 0
+        minv, used = [float("inf")] * (n + 1), [False] * (n + 1)
+        while True:
+            used[j0] = True
+            i0, delta, j1 = p[j0], float("inf"), 0
+            for j in range(1, n + 1):
+                if not used[j]:
+                    cur = cost[i0 - 1][j - 1] - u[i0] - v[j]
+                    if cur < minv[j]:
+                        minv[j], way[j] = cur, j0
+                    if minv[j] < delta:
+                        delta, j1 = minv[j], j
+            for j in range(n + 1):
+                if used[j]:
+                    u[p[j]] += delta
+                    v[j] -= delta
+                else:
+                    minv[j] -= delta
+            j0 = j1
+            if p[j0] == 0:
+                break
+        while j0:
+            j1 = way[j0]
+            p[j0] = p[j1]
+            j0 = j1
+    return {p[j] - 1: j - 1 for j in range(1, n + 1) if p[j] and p[j] - 1 < n_r and j - 1 < n_c}
+
+
+def score_document(gold_tables, pred_tables):
+    """Match predicted to gold tables in one document and score each gold table.
+
+    A pair is eligible only if both tables' ``pages`` ranges ([first, last],
+    inclusive) overlap; a table without ``pages`` is eligible with every table.
+    The matching maximises the summed TEDS over eligible pairs with TEDS > 0.
+    An unmatched gold table scores 0 on every measure. Returns per-gold-table
+    scores (in gold order) and the number of unmatched predicted tables.
+    """
+    w = [[0.0] * len(pred_tables) for _ in gold_tables]
+    for i, g in enumerate(gold_tables):
+        for j, p in enumerate(pred_tables):
+            gp, pp = _pages(g), _pages(p)
+            if gp is None or pp is None or gp & pp:
+                w[i][j] = teds(g, p)
+    match = {i: j for i, j in _assign(w).items() if w[i][j] > 0}
+    per_table = [score_table(g, pred_tables[match[i]]) if i in match else dict(ZERO)
+                 for i, g in enumerate(gold_tables)]
+    return {"tables": per_table, "matched": len(match),
+            "unmatched_predictions": len(pred_tables) - len(match)}
+
+
+def pool(documents, seed=0, draws=2000):
+    """Mean over gold tables, with a percentile bootstrap that resamples documents.
+
+    ``documents`` maps document id -> score_document() result. The point value
+    of each measure is the mean over all gold tables (exact match as a
+    fraction). The 95% interval resamples documents with replacement
+    (``draws`` draws, ``random.Random(seed)``, documents in sorted-id order)
+    and takes the lower and upper 2.5% quantiles of the table-weighted means.
+    """
+    import math
+    import random
+
+    ids = sorted(documents)
+    per_doc = []
+    for d in ids:
+        tables = documents[d]["tables"]
+        per_doc.append((len(tables), {m: sum(float(t[m]) for t in tables) for m in METRICS}))
+    total = sum(n for n, _ in per_doc)
+    if not total:
+        return {"status": "no_gold_tables"}
+    out = {"documents": len(ids), "gold_tables": total,
+           "unmatched_predictions": sum(documents[d]["unmatched_predictions"] for d in ids)}
+    rng = random.Random(seed)
+    samples = {m: [] for m in METRICS}
+    for _ in range(draws):
+        pick = [per_doc[rng.randrange(len(per_doc))] for _ in per_doc]
+        n = sum(k for k, _ in pick)
+        for m in METRICS:
+            samples[m].append(sum(s[m] for _, s in pick) / n if n else math.nan)
+    for m in METRICS:
+        vals = sorted(x for x in samples[m] if not math.isnan(x))
+        lo = vals[math.floor((len(vals) - 1) * 0.025)] if vals else None
+        hi = vals[math.ceil((len(vals) - 1) * 0.975)] if vals else None
+        out[m] = {"mean": sum(s[m] for _, s in per_doc) / total, "ci95": [lo, hi]}
+    return out
