@@ -22,22 +22,26 @@ MODEL = {"iphone": "heocr_modern_v1", "pixel": "heocr_modern_v1",
 SCHEMA = "heocr.bench.efficiency.v1"
 
 
-def tesseract(root, settings, paths):
+def tesseract_page(root, settings, path, stem):
     assets = root / "assets" / Path(settings["assets"][0]["path"]).parent
+    subprocess.run(
+        ["tesseract", str(path), str(stem), "--tessdata-dir", str(assets),
+         *settings["argv"], "-c", "tessedit_create_txt=1", "-c", "tessedit_create_tsv=1"],
+        stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, check=True, timeout=180,
+    )
+
+
+def tesseract(root, settings, paths):
     with TemporaryDirectory() as folder:
         stem = Path(folder) / "recognized"
         for path, carrier in paths:
-            subprocess.run(
-                ["tesseract", str(path), str(stem), "--tessdata-dir", str(assets),
-                 *settings["argv"], "-c", "tessedit_create_txt=1", "-c", "tessedit_create_tsv=1"],
-                stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, check=True, timeout=180,
-            )
+            tesseract_page(root, settings, path, stem)
             for suffix in (".txt", ".tsv"):
                 stem.with_suffix(suffix).unlink()
             yield carrier
 
 
-def paddle(root, settings, paths):
+def paddle_reader(root, settings):
     import cv2
     from paddleocr_hebrew import HebrewOCR
 
@@ -45,13 +49,44 @@ def paddle(root, settings, paths):
     engine = HebrewOCR.word(root / "assets/paddle", providers=[options["provider"]], **{
         key: value for key, value in options.items() if key not in ("provider", "pipeline", "rec_mode", "order")
     })
-    for path, carrier in paths:
+
+    def read(path):
         raster = cv2.imread(str(path), cv2.IMREAD_COLOR)
         if raster is None:
             raise ValueError("Paddle could not decode a public raster")
         result = engine.read_array(raster, rec_mode=options["rec_mode"])
-        "\n".join(line["text"] for line in result["lines"])
+        return "\n".join(line["text"] for line in result["lines"])
+
+    return read
+
+
+def paddle(root, settings, paths):
+    read = paddle_reader(root, settings)
+    for path, carrier in paths:
+        read(path)
         yield carrier
+
+
+def router_options(model_root, carrier, *, layout=None):
+    capture = CAPTURES[carrier]
+    v6 = model_root / "v6.traineddata" if carrier in ("scanner", "issuer-render") else None
+    options = dict(ocr_router="v2", ocr_capture_type=capture, ocr_line_v6=v6, convert=False)
+    if layout is not None:
+        options["ocr_layout"] = layout
+    return options
+
+
+def router_output(doc, settings, options):
+    model = MODEL[options["ocr_capture_type"]]
+    expected = "sha256:" + settings["models"][model]
+    if len(doc.pages) != 1 or "ocr_call_failed" in doc.flags:
+        raise RuntimeError("router failed to complete a raster")
+    if doc.pages[0].route != "ocr" or doc.components.get(f"tesseract:{model}.traineddata") != expected:
+        raise RuntimeError("router used an unexpected page route or model")
+    v6_sha = doc.components.get("tesseract:line_v6.traineddata")
+    if v6_sha is not None and (not options["ocr_line_v6"] or v6_sha != "sha256:" + settings["models"]["v6"]):
+        raise RuntimeError("router used an unexpected line model")
+    return doc.to_json(indent=None), v6_sha is not None
 
 
 def router(model_root, settings, paths, *, require_v6=True):
@@ -61,24 +96,12 @@ def router(model_root, settings, paths, *, require_v6=True):
     grouped = defaultdict(list)
     for path, carrier in paths:
         grouped[carrier].append(path)
-    v6_seen = 0
+    v6_seen = False
     for carrier, sources in grouped.items():
-        capture = CAPTURES[carrier]
-        v6 = model_root / "v6.traineddata" if carrier in ("scanner", "issuer-render") else None
-        model = MODEL[capture]
-        expected = "sha256:" + settings["models"][model]
-        options = dict(ocr_router="v2", ocr_capture_type=capture, ocr_line_v6=v6, convert=False)
+        options = router_options(model_root, carrier)
         for doc in heocr.extract_images(sources, workers=settings["workers"], **options):
-            if len(doc.pages) != 1 or "ocr_call_failed" in doc.flags:
-                raise RuntimeError("router failed to complete a public raster")
-            if doc.pages[0].route != "ocr" or doc.components.get(f"tesseract:{model}.traineddata") != expected:
-                raise RuntimeError("router used an unexpected page route or model")
-            v6_sha = doc.components.get("tesseract:line_v6.traineddata")
-            if v6_sha is not None:
-                if not v6 or v6_sha != "sha256:" + settings["models"]["v6"]:
-                    raise RuntimeError("router used an unexpected line model")
-                v6_seen += 1
-            doc.to_json(indent=None)
+            _, used_v6 = router_output(doc, settings, options)
+            v6_seen |= used_v6
             yield carrier
     if require_v6 and not v6_seen:
         raise RuntimeError("router did not exercise its line-model branch")

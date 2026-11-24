@@ -52,34 +52,42 @@ def cost_fields(trials, warmup, rate, workload, mandatory_fees_usd=Decimal(0)):
         )
 
 
-def row(reader, platform, result, dry_run):
+def row(reader, platform, result, dry_run, *, four_repeats=False):
     trials = result["trials"]
     api = reader["kind"] == "api"
     requests = [item for trial in trials for item in trial["requests"]]
-    timing = median_ci([item["pages_per_minute"] for item in trials])
-    memory = median_ci([item["peak_rss_bytes"] / 1024**2 for item in trials])
+    complete = not four_repeats or all(item["complete"] for item in trials)
+    pages = min(len(item["completed"]) for item in trials)
+    rss_values = [item["peak_rss_bytes"] / 1024**2 for item in trials if item["peak_rss_bytes"] > 0]
+    speed_values = [item["pages_per_minute"] for item in trials] if complete else []
+    if four_repeats:
+        timing = {"median": median(speed_values) if speed_values else None, "ci95": None}
+        memory = {"median": median(rss_values) if rss_values else None, "ci95": None}
+    else:
+        timing, memory = median_ci(speed_values), median_ci(rss_values)
+    runner_costs = [item["runner_usd_per_1000"] for item in trials]
     data = {
         "reader_id": reader["id"], "platform": platform,
         "execution": reader["mode"], "status": "dry-run" if dry_run else "registered",
-        "pages": len(trials[0]["completed"]), "repetitions": len(trials),
+        "pages": pages, "repetitions": len(trials),
         "pages_per_minute": None if api else timing["median"],
         "pages_per_minute_ci95": None if api else timing["ci95"],
         "peak_rss_mib": memory["median"], "peak_rss_mib_ci95": memory["ci95"],
-        "runner_hours_per_1000": median([item["seconds"] / len(item["completed"]) * 1000 / 3600
-                                        for item in trials]),
-        "runner_usd_per_1000": median([item["runner_usd_per_1000"] for item in trials]),
+        "runner_hours_per_1000": (median(item["seconds"] / len(item["completed"]) * 1000 / 3600
+                                         for item in trials) if complete and pages else None),
+        "runner_usd_per_1000": None if None in runner_costs else median(runner_costs),
     }
     for key in ("marginal_usd_per_1000", "fully_loaded_usd_per_1000"):
         values = [item[key] for item in trials]
         data[key] = None if None in values else median(values)
     if api:
+        durations = [item["seconds"] for item in requests if item["seconds"] is not None]
         data.update({
             "api_price_key": reader["price_key"],
             "api_service_region": reader["service_region"],
             "api_pages_per_minute": timing["median"], "api_pages_per_minute_ci95": timing["ci95"],
-            "api_mean_request_latency_seconds": (sum(item["seconds"] for item in requests) / len(requests)
-                                                 if requests else None),
-            "api_timed_pages": len({item["page"] for item in requests}),
+            "api_mean_request_latency_seconds": sum(durations) / len(durations) if durations else None,
+            "api_timed_pages": len({item["page"] for item in requests if item["seconds"] is not None}),
             "api_timing_scope": "end-to-end synchronous client, all attempts included; RSS is client-only",
             "api_timing_label": "from registered run; network-bound; RSS measures the client",
         })

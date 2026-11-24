@@ -23,6 +23,16 @@ class Telemetry:
         with self._lock, self._events.open("a", encoding="utf-8") as out:
             out.write(json.dumps(entry, separators=(",", ":")) + "\n")
 
+    def save_first_output(self, page_id, serialized):
+        """Persist the same serialized output only when repeat 1 requests an accuracy artifact."""
+        folder = self.job.get("accuracy_output_dir")
+        if folder is None:
+            return
+        if page_id not in {page["id"] for page in self.pages}:
+            raise ValueError("output page outside trial")
+        with (Path(folder) / f"{page_id}.ocr").open("xb") as stream:
+            stream.write(serialized)
+
     def complete(self, page_id, *, local_fallback=False):
         """Call after the usable OCR output has been produced."""
         self._emit(event="page", page=page_id, local_fallback=local_fallback)
