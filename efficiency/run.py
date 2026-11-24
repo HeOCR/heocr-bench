@@ -116,11 +116,16 @@ def tree_rss(process):
 
 
 def measure(root, reader, model_root):
-    import psutil
-
     command = [sys.executable, "-B", __file__, str(root), "--worker", reader]
     if model_root:
         command.extend(["--models", str(model_root)])
+    timings = sample(command, reader)
+    return {**timings.pop("worker_result"), **timings}
+
+
+def sample(command, reader):
+    import psutil
+
     start = monotonic()
     with TemporaryFile() as errors, subprocess.Popen(
         command, stdout=subprocess.PIPE, stderr=errors, env={**os.environ, **TESSERACT_ENV},
@@ -141,7 +146,7 @@ def measure(root, reader, model_root):
     if peak <= 0:
         raise RuntimeError("RSS sampler did not observe the worker")
     return {"seconds": round(monotonic() - start, 6), "peak_rss_bytes": peak,
-            "completed_by_carrier": json.loads(output)}
+            "worker_result": json.loads(output)}
 
 
 def metrics(trials, hourly_rate):

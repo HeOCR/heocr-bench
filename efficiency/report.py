@@ -9,7 +9,9 @@ from pathlib import Path
 import sys
 
 from panel import DATASET_REVISION, HERE, panel, sha256
+from quote import quote
 from run import SCHEMA, metrics
+from vertex import PRICE_FILE, USAGE, price
 
 PLATFORMS = ("m4-cpu", "github-ubuntu-cpu")
 SCOPE = "public-v0-image-only"
@@ -37,7 +39,15 @@ def read_receipt(path, label):
                              not math.isfinite(r["seconds"]) or r["seconds"] <= 0 or
                              r["peak_rss_bytes"] <= 0 for r in trials):
             raise ValueError(f"incomplete receipt for {reader}")
-        if any(result[key] != value for key, value in metrics(trials, data["runner_usd_hour"]).items()):
+        expected = metrics(trials, data["runner_usd_hour"])
+        if reader == "gemini-vertex-v0":
+            if len(trials) != 1 or data["vertex_pricing_sha256"] != sha256(PRICE_FILE):
+                raise ValueError("Vertex receipt requires one trial and the pinned price list")
+            usage = trials[0]["vertex_usage"]
+            expected["marginal_usd_per_1000"] = round(
+                float(quote(expected["pages"], *(usage[key] for key in USAGE), price())), 6
+            )
+        if any(result[key] != value for key, value in expected.items()):
             raise ValueError(f"receipt metrics differ for {reader}")
     return data["readers"]
 

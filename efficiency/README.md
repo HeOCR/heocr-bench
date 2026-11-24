@@ -80,3 +80,10 @@ For Gemini, project the official list rate from a matched Vertex
 `usageMetadata` receipt with `efficiency/quote.py`. Supply aggregate prompt,
 candidate and thought tokens separately and exclude cached-token pricing
 unless the request policy includes caching.
+
+To measure Gemini directly, use `efficiency/vertex_run.py` with an authorized
+Vertex project, a short-lived token in `HEOCR_BENCH_VERTEX_ACCESS_TOKEN`, the
+pinned OCR prompt file, expected response model version and a spend budget.
+This runs one sequential pass, with no automatic retries. It emits client
+timing, client RSS and aggregate token usage. Keep credentials in the runner
+environment. [Vertex response and token counts](https://docs.cloud.google.com/gemini-enterprise-agent-platform/reference/rest/v1beta1/GenerateContentResponse)

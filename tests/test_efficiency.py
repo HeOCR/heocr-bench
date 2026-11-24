@@ -11,6 +11,7 @@ from panel import HERE, panel  # noqa: E402
 from quote import quote  # noqa: E402
 from report import PLATFORMS, rows  # noqa: E402
 from run import metrics  # noqa: E402
+from vertex import response_usage  # noqa: E402
 
 
 def test_public_panel_is_image_only_and_covers_all_carriers():
@@ -44,3 +45,22 @@ def test_token_price_includes_reasoning():
     assert quote(100, 100_000, 10_000, 5_000, prices) == Decimal("1.3125")
     with pytest.raises(ValueError):
         quote(0, 0, 0, 0, prices)
+
+
+def test_vertex_counts_only_billable_uncached_ocr_usage():
+    response = {
+        "modelVersion": "pinned",
+        "candidates": [{"finishReason": "STOP"}],
+        "usageMetadata": {
+            "promptTokenCount": 1000, "candidatesTokenCount": 150,
+            "thoughtsTokenCount": 10, "totalTokenCount": 1160,
+        },
+    }
+    assert response_usage(response, "pinned") == {
+        "promptTokenCount": 1000, "candidatesTokenCount": 150, "thoughtsTokenCount": 10,
+    }
+    with pytest.raises(ValueError, match="model version"):
+        response_usage(response, "other")
+    response["usageMetadata"]["cachedContentTokenCount"] = 1
+    with pytest.raises(ValueError, match="caching"):
+        response_usage(response, "pinned")
