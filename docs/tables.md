@@ -13,7 +13,7 @@ Module: `heocr_bench.tables`. Status: scorer only. No set is registered yet; the
 - **Coverage.** Every grid position belongs to exactly one cell. Overlapping or out-of-grid cells are an error. Positions that no cell covers are filled with empty 1×1 cells.
 - **Masked cells.** A cell may carry `"mask": true` (for example an illegible or redacted cell). Its text is never scored; its position and spans still are:
   - TEDS: a substitution touching a masked `td` costs 0 for content (a span difference still costs 1);
-  - GriTS-Con: a masked gold position has similarity 1 with whatever it is aligned to; GriTS-Top is unchanged;
+  - GriTS-Con: a masked gold position is **excluded**. It has similarity 0 during alignment, so alignment is driven by unmasked cells only. Afterwards it contributes nothing to the numerator, it is removed from |G|, and the predicted position aligned to it (if any) is removed from |P|. If nothing is left on either side, the score is 1. GriTS-Top is unchanged;
   - exact match: the masked cell's text is ignored, everything else must agree.
 - **Page range.** A table may carry `"pages": [first, last]` (inclusive), used only for document matching.
 - **Header rows.** `header_rows` counts the leading rows that form the column header (the `thead`).

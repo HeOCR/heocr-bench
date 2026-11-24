@@ -175,6 +175,22 @@ class MaskTests(unittest.TestCase):
         self.assertFalse(exact_match(gold, wider))
         self.assertLess(teds(gold, wider, content=False), 1.0)
 
+    def test_grits_con_excludes_masked_positions(self):
+        gold = {"rows": 1, "cols": 2, "cells": [{"r": 0, "c": 0, "text": "ab"},
+                                                {"r": 0, "c": 1, "text": "zz", "mask": True}]}
+        right = {"rows": 1, "cols": 2, "cells": [{"r": 0, "c": 0, "text": "ab"}, {"r": 0, "c": 1, "text": "qq"}]}
+        wrong = {"rows": 1, "cols": 2, "cells": [{"r": 0, "c": 0, "text": "xy"}, {"r": 0, "c": 1, "text": "qq"}]}
+        # The masked column is aligned and dropped from both sides: 2 * 1 / (1 + 1).
+        self.assertAlmostEqual(grits(gold, right, "con"), 1.0)
+        # No wildcard credit: with the only unmasked cell wrong, the score is 0, not 0.5.
+        self.assertAlmostEqual(grits(gold, wrong, "con"), 0.0)
+        extra = {"rows": 1, "cols": 3, "cells": [{"r": 0, "c": 0, "text": "ab"}, {"r": 0, "c": 1, "text": "qq"},
+                                                 {"r": 0, "c": 2, "text": "ww"}]}
+        # Unaligned extra predicted cells still count in |P|.
+        self.assertLess(grits(gold, extra, "con"), 1.0)
+        everything_masked = {"rows": 1, "cols": 1, "cells": [{"r": 0, "c": 0, "text": "a", "mask": True}]}
+        self.assertEqual(grits(everything_masked, {"rows": 1, "cols": 1, "cells": [{"r": 0, "c": 0}]}, "con"), 1.0)
+
     def test_mask_must_be_boolean(self):
         with self.assertRaisesRegex(ValueError, "boolean"):
             load_table({"rows": 1, "cols": 1, "cells": [{"r": 0, "c": 0, "mask": "yes"}]})
