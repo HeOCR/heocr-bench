@@ -139,7 +139,8 @@ def test_only_first_authorized_repeat_persists_outputs(tmp_path):
     page = {"id": "invented", "carrier": "scanner", "path": "unused"}
     script = (
         f"import sys; sys.path.insert(0, {str(EFFICIENCY)!r}); from telemetry import Telemetry; "
-        "t=Telemetry(); t.save_first_output('invented', b''); t.complete('invented')"
+        "from time import sleep; t=Telemetry(); sleep(0.08); "
+        "t.save_first_output('invented', b''); t.complete('invented')"
     )
     reader = {"id": "local", "kind": "local", "concurrency": 2, "argv": [sys.executable, "-c", script]}
     args = (reader, [page], "trial")
