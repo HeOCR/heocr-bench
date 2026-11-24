@@ -59,8 +59,9 @@ because the mask is projected at the character level.
 `heocr_bench.tables` scores table structure: TEDS, TEDS-struct, GriTS-Con,
 GriTS-Top and exact match, on the `heocr_table.v1` format (logical column
 order, so right-to-left tables are never mirrored). See
-[docs/tables.md](docs/tables.md) for the exact definitions. No table set is
-registered yet.
+[docs/tables.md](docs/tables.md) for the exact definitions. Form structure
+(field/value F1 and section-tree similarity) is in `heocr_bench.forms`; see
+[docs/forms.md](docs/forms.md). No table or form set is registered yet.
 
 ## Efficiency
 
