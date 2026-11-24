@@ -182,8 +182,8 @@ def _grid(table, kind):
 
 
 def _sim_con(a, b):
-    if a is None or b is None:  # a masked gold position matches any text
-        return 1.0
+    if a is None:  # a masked gold position contributes nothing (excluded, see grits)
+        return 0.0
     if not a and not b:
         return 1.0
     return Indel.normalized_similarity(a, b)  # 2*LCS / (|a| + |b|)
@@ -224,7 +224,9 @@ def grits(gold, pred, kind="con"):
 
     Rows are aligned by the 1D alignment score of their cells, columns
     likewise, and the score is 2 * sum f(aligned grid cells) / (|G| + |P|),
-    where |G| and |P| count grid positions.
+    where |G| and |P| count grid positions. In GriTS-Con a masked gold
+    position scores 0 during alignment and is excluded afterwards: it leaves
+    |G|, and the predicted position aligned to it (if any) leaves |P|.
     """
     if kind not in ("con", "top"):
         raise ValueError("kind is 'con' or 'top'")
@@ -247,6 +249,13 @@ def grits(gold, pred, kind="con"):
     _t, row_pairs = _align(len(g), len(p), row_score)
     _t, col_pairs = _align(gc, pc, col_score)
     total = sum(f(g[i][a], p[j][b]) for i, j in row_pairs for a, b in col_pairs)
+    if kind == "con":
+        # Masked gold positions are excluded: out of the numerator (f = 0), out of |G|, and the predicted
+        # positions aligned to them out of |P|.
+        ng -= sum(1 for row in g for x in row if x is None)
+        np_ -= sum(1 for i, _j in row_pairs for a, _b in col_pairs if g[i][a] is None)
+        if ng + np_ == 0:
+            return 1.0
     return 2 * total / (ng + np_)
 
 
@@ -267,7 +276,12 @@ def exact_match(gold, pred):
 def score_table(gold, pred):
     return {"teds": teds(gold, pred), "teds_struct": teds(gold, pred, content=False),
             "grits_con": grits(gold, pred, "con"), "grits_top": grits(gold, pred, "top"),
-            "exact": exact_match(gold, pred)}
+            "exact": exact_match(gold, pred), "masked_cells": masked_cells(gold)}
+
+
+def masked_cells(table):
+    """Number of gold cells whose text is masked."""
+    return sum(1 for cell in load_table(table)[3] if cell[5])
 
 
 # ---------------------------------------------------------------- documents and pooling
@@ -339,7 +353,7 @@ def score_document(gold_tables, pred_tables):
             if gp is None or pp is None or gp & pp:
                 w[i][j] = teds(g, p)
     match = {i: j for i, j in _assign(w).items() if w[i][j] > 0}
-    per_table = [score_table(g, pred_tables[match[i]]) if i in match else dict(ZERO)
+    per_table = [score_table(g, pred_tables[match[i]]) if i in match else dict(ZERO, masked_cells=masked_cells(g))
                  for i, g in enumerate(gold_tables)]
     return {"tables": per_table, "matched": len(match),
             "unmatched_predictions": len(pred_tables) - len(match)}
@@ -366,6 +380,7 @@ def pool(documents, seed=0, draws=2000):
     if not total:
         return {"status": "no_gold_tables"}
     out = {"documents": len(ids), "gold_tables": total,
+           "masked_cells": sum(int(t.get("masked_cells", 0)) for d in ids for t in documents[d]["tables"]),
            "unmatched_predictions": sum(documents[d]["unmatched_predictions"] for d in ids)}
     rng = random.Random(seed)
     samples = {m: [] for m in METRICS}

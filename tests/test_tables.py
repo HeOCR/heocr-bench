@@ -52,7 +52,8 @@ class TableFormatTests(unittest.TestCase):
 class TedsTests(unittest.TestCase):
     def test_identical_tables_score_one(self):
         self.assertEqual(score_table(GOLD, GOLD),
-                         {"teds": 1.0, "teds_struct": 1.0, "grits_con": 1.0, "grits_top": 1.0, "exact": True})
+                         {"teds": 1.0, "teds_struct": 1.0, "grits_con": 1.0, "grits_top": 1.0, "exact": True,
+                          "masked_cells": 0})
 
     def test_zhang_shasha_on_small_trees(self):
         # a(b, c) vs a(b): one deletion.
@@ -166,12 +167,29 @@ class MaskTests(unittest.TestCase):
         gold = masked(GOLD, 1, 2)
         self.assertLess(teds(GOLD, pred), 1.0)
         self.assertEqual(score_table(gold, pred),
-                         {"teds": 1.0, "teds_struct": 1.0, "grits_con": 1.0, "grits_top": 1.0, "exact": True})
+                         {"teds": 1.0, "teds_struct": 1.0, "grits_con": 1.0, "grits_top": 1.0, "exact": True,
+                          "masked_cells": 1})
         wider = table(3, 4, ["\u05e9\u05dd", "\u05db\u05de\u05d5\u05ea", "\u05de\u05d7\u05d9\u05e8", "",
                              "\u05ea\u05e4\u05d5\u05d7", "2", "99.99", "",
                              "\u05d0\u05d2\u05e1", "5", "3.20", ""], header_rows=1)
         self.assertFalse(exact_match(gold, wider))
         self.assertLess(teds(gold, wider, content=False), 1.0)
+
+    def test_grits_con_excludes_masked_positions(self):
+        gold = {"rows": 1, "cols": 2, "cells": [{"r": 0, "c": 0, "text": "ab"},
+                                                {"r": 0, "c": 1, "text": "zz", "mask": True}]}
+        right = {"rows": 1, "cols": 2, "cells": [{"r": 0, "c": 0, "text": "ab"}, {"r": 0, "c": 1, "text": "qq"}]}
+        wrong = {"rows": 1, "cols": 2, "cells": [{"r": 0, "c": 0, "text": "xy"}, {"r": 0, "c": 1, "text": "qq"}]}
+        # The masked column is aligned and dropped from both sides: 2 * 1 / (1 + 1).
+        self.assertAlmostEqual(grits(gold, right, "con"), 1.0)
+        # No wildcard credit: with the only unmasked cell wrong, the score is 0, not 0.5.
+        self.assertAlmostEqual(grits(gold, wrong, "con"), 0.0)
+        extra = {"rows": 1, "cols": 3, "cells": [{"r": 0, "c": 0, "text": "ab"}, {"r": 0, "c": 1, "text": "qq"},
+                                                 {"r": 0, "c": 2, "text": "ww"}]}
+        # Unaligned extra predicted cells still count in |P|.
+        self.assertLess(grits(gold, extra, "con"), 1.0)
+        everything_masked = {"rows": 1, "cols": 1, "cells": [{"r": 0, "c": 0, "text": "a", "mask": True}]}
+        self.assertEqual(grits(everything_masked, {"rows": 1, "cols": 1, "cells": [{"r": 0, "c": 0}]}, "con"), 1.0)
 
     def test_mask_must_be_boolean(self):
         with self.assertRaisesRegex(ValueError, "boolean"):
@@ -231,6 +249,7 @@ class DocumentTests(unittest.TestCase):
         out = pool(docs, seed=0, draws=500)
         self.assertEqual(out["gold_tables"], 4)
         self.assertEqual(out["unmatched_predictions"], 2)
+        self.assertEqual(out["masked_cells"], 0)
         self.assertAlmostEqual(out["teds"]["mean"], 0.75)
         self.assertAlmostEqual(out["exact"]["mean"], 0.75)
         lo, hi = out["teds"]["ci95"]
