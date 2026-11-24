@@ -47,7 +47,8 @@ inputs. Read efficiency and accuracy with those input scopes in view.
   HeOCR commit and model digests are recorded.
 - Gemini uses Vertex global standard pricing. The November 2026 list price
   is $0.75 per million input tokens and $3.75 per million output tokens
-  including reasoning, through December 31. List price per 1,000 pages
+  including reasoning, through December 31. The CSV includes both rates.
+  List price per 1,000 pages
   equals `(0.75 × input + 3.75 × (output + reasoning)) / (1,000 × pages)`
   for total measured tokens and completed pages. A `list-price-only` row
   has no matched usage, wall time or client RSS receipt. Empty fields denote

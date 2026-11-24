@@ -17,7 +17,8 @@ PLATFORMS = ("m4-cpu", "github-ubuntu-cpu")
 SCOPE = "public-v0-image-only"
 COLUMNS = ("reader_id", "platform", "execution", "status", "pages", "repetitions",
            "pages_per_minute", "peak_rss_mib", "marginal_usd_per_1000",
-           "runner_hours_per_1000", "runner_usd_per_1000")
+           "runner_hours_per_1000", "runner_usd_per_1000",
+           "api_input_usd_per_million", "api_output_usd_per_million")
 
 
 def read_receipt(path, label):
@@ -69,6 +70,10 @@ def rows(receipts, external_only=False):
             else:
                 status = "pending"
             fields = {key: result[key] for key in COLUMNS if result and key in result}
+            if reader == "gemini-vertex-v0":
+                prices = price()
+                fields["api_input_usd_per_million"] = prices["input_usd_per_million"]
+                fields["api_output_usd_per_million"] = prices["output_usd_per_million"]
             yield dict(reader_id=reader, platform=host, execution=mode, status=status,
                        repetitions=len(result["measurements"]) if result else None, **fields)
 

@@ -120,7 +120,7 @@ def measure(root, reader, model_root):
     if model_root:
         command.extend(["--models", str(model_root)])
     timings = sample(command, reader)
-    return {**timings.pop("worker_result"), **timings}
+    return {"completed_by_carrier": timings.pop("worker_result"), **timings}
 
 
 def sample(command, reader):

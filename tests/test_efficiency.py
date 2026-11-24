@@ -3,6 +3,7 @@ from decimal import Decimal
 import json
 from pathlib import Path
 import sys
+from unittest.mock import patch
 
 import pytest
 
@@ -10,7 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "efficiency"))
 from panel import HERE, panel  # noqa: E402
 from quote import quote  # noqa: E402
 from report import PLATFORMS, rows  # noqa: E402
-from run import metrics  # noqa: E402
+from run import measure, metrics  # noqa: E402
 from vertex import response_usage  # noqa: E402
 
 
@@ -32,12 +33,23 @@ def test_metrics_include_median_time_and_maximum_sampled_memory():
     }
 
 
+def test_native_worker_coverage_remains_nested_in_the_measurement():
+    with patch("run.sample", return_value={
+        "worker_result": {"scanner": 65}, "seconds": 30, "peak_rss_bytes": 1024,
+    }):
+        assert measure(Path("images"), "tessdata-fast", None) == {
+            "completed_by_carrier": {"scanner": 65}, "seconds": 30, "peak_rss_bytes": 1024,
+        }
+
+
 def test_external_export_excludes_router_and_keeps_api_price_only_status():
     external = list(rows({host: {} for host in PLATFORMS}, external_only=True))
     assert len(external) == 12
     assert all(row["reader_id"] != "router-v2" for row in external)
     gemini = [row for row in external if row["reader_id"] == "gemini-vertex-v0"]
     assert len(gemini) == 2 and all(row["status"] == "list-price-only" for row in gemini)
+    assert all(row["api_input_usd_per_million"] == Decimal("0.75") for row in gemini)
+    assert all(row["api_output_usd_per_million"] == Decimal("3.75") for row in gemini)
 
 
 def test_token_price_includes_reasoning():
