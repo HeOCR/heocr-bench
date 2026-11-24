@@ -1,0 +1,22 @@
+{
+  "schema": "heocr.bench.registry.v1",
+  "sets": {
+    "p-mod-open-v0": {
+      "version": "0",
+      "splits": {
+        "test": {
+          "reference_access": "public",
+          "dataset": "HeOCR/p-mod-open-v0",
+          "revision": "main",
+          "manifest_sha256": "f173417a49f960f8bdd2bf9950a9e676d2070aeb6d6a6a3b0066887af6a11190",
+          "normalization": "line_fold_v1",
+          "normalization_source_sha256": "2e2627104be4f27dc3204787dd3ff4f8591d95d1d96294c65833d2773041d317",
+          "protocol": "page-cer-v1",
+          "headline_view": "filtered",
+          "pages": 31,
+          "carriers": 65
+        }
+      }
+    }
+  }
+}
