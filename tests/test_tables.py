@@ -52,7 +52,8 @@ class TableFormatTests(unittest.TestCase):
 class TedsTests(unittest.TestCase):
     def test_identical_tables_score_one(self):
         self.assertEqual(score_table(GOLD, GOLD),
-                         {"teds": 1.0, "teds_struct": 1.0, "grits_con": 1.0, "grits_top": 1.0, "exact": True})
+                         {"teds": 1.0, "teds_struct": 1.0, "grits_con": 1.0, "grits_top": 1.0, "exact": True,
+                          "masked_cells": 0})
 
     def test_zhang_shasha_on_small_trees(self):
         # a(b, c) vs a(b): one deletion.
@@ -166,7 +167,8 @@ class MaskTests(unittest.TestCase):
         gold = masked(GOLD, 1, 2)
         self.assertLess(teds(GOLD, pred), 1.0)
         self.assertEqual(score_table(gold, pred),
-                         {"teds": 1.0, "teds_struct": 1.0, "grits_con": 1.0, "grits_top": 1.0, "exact": True})
+                         {"teds": 1.0, "teds_struct": 1.0, "grits_con": 1.0, "grits_top": 1.0, "exact": True,
+                          "masked_cells": 1})
         wider = table(3, 4, ["\u05e9\u05dd", "\u05db\u05de\u05d5\u05ea", "\u05de\u05d7\u05d9\u05e8", "",
                              "\u05ea\u05e4\u05d5\u05d7", "2", "99.99", "",
                              "\u05d0\u05d2\u05e1", "5", "3.20", ""], header_rows=1)
@@ -231,6 +233,7 @@ class DocumentTests(unittest.TestCase):
         out = pool(docs, seed=0, draws=500)
         self.assertEqual(out["gold_tables"], 4)
         self.assertEqual(out["unmatched_predictions"], 2)
+        self.assertEqual(out["masked_cells"], 0)
         self.assertAlmostEqual(out["teds"]["mean"], 0.75)
         self.assertAlmostEqual(out["exact"]["mean"], 0.75)
         lo, hi = out["teds"]["ci95"]

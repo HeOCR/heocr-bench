@@ -267,7 +267,12 @@ def exact_match(gold, pred):
 def score_table(gold, pred):
     return {"teds": teds(gold, pred), "teds_struct": teds(gold, pred, content=False),
             "grits_con": grits(gold, pred, "con"), "grits_top": grits(gold, pred, "top"),
-            "exact": exact_match(gold, pred)}
+            "exact": exact_match(gold, pred), "masked_cells": masked_cells(gold)}
+
+
+def masked_cells(table):
+    """Number of gold cells whose text is masked."""
+    return sum(1 for cell in load_table(table)[3] if cell[5])
 
 
 # ---------------------------------------------------------------- documents and pooling
@@ -339,7 +344,7 @@ def score_document(gold_tables, pred_tables):
             if gp is None or pp is None or gp & pp:
                 w[i][j] = teds(g, p)
     match = {i: j for i, j in _assign(w).items() if w[i][j] > 0}
-    per_table = [score_table(g, pred_tables[match[i]]) if i in match else dict(ZERO)
+    per_table = [score_table(g, pred_tables[match[i]]) if i in match else dict(ZERO, masked_cells=masked_cells(g))
                  for i, g in enumerate(gold_tables)]
     return {"tables": per_table, "matched": len(match),
             "unmatched_predictions": len(pred_tables) - len(match)}
@@ -366,6 +371,7 @@ def pool(documents, seed=0, draws=2000):
     if not total:
         return {"status": "no_gold_tables"}
     out = {"documents": len(ids), "gold_tables": total,
+           "masked_cells": sum(int(t.get("masked_cells", 0)) for d in ids for t in documents[d]["tables"]),
            "unmatched_predictions": sum(documents[d]["unmatched_predictions"] for d in ids)}
     rng = random.Random(seed)
     samples = {m: [] for m in METRICS}
