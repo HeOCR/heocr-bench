@@ -97,3 +97,9 @@ routes. To generate both CSVs from verified receipts
 python efficiency/report.py > efficiency/efficiency.csv
 python efficiency/report.py --external-only > efficiency/external.csv
 ```
+
+## Decision 0030 registered runs
+
+Use the [registered efficiency harness](REGISTERED.md) for the v1 one-shot
+efficiency receipt. The workflow, cost basis, adapter hooks and table
+export are documented separately from this historical v0 table.

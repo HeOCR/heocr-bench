@@ -54,7 +54,7 @@ def paddle(root, settings, paths):
         yield carrier
 
 
-def router(model_root, settings, paths):
+def router(model_root, settings, paths, *, require_v6=True):
     import heocr
 
     os.environ["HEOCR_MODELS"] = str(model_root)
@@ -80,7 +80,7 @@ def router(model_root, settings, paths):
                 v6_seen += 1
             doc.to_json(indent=None)
             yield carrier
-    if not v6_seen:
+    if require_v6 and not v6_seen:
         raise RuntimeError("router did not exercise its line-model branch")
 
 

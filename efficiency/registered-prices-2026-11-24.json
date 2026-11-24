@@ -1,0 +1,48 @@
+{
+  "checked": "2026-11-24",
+  "currency": "USD",
+  "workload_pages": 1000,
+  "runners": {
+    "m4-cpu": {
+      "basis": "Dedicated 16-core M4 Max, 128 GB, USD 559 for 720 allocated hours",
+      "usd": "559", "hours": "720", "minute_rounding": false,
+      "source": "https://bookingmac.com/mac-studio/m4-max"
+    },
+    "github-ubuntu-cpu": {
+      "basis": "Paid GitHub Actions Linux 2-core x64; one job at the stated workload",
+      "usd": "0.36", "hours": "1", "minute_rounding": true,
+      "source": "https://docs.github.com/en/billing/reference/actions-runner-pricing"
+    }
+  },
+  "api": {
+    "haiku-4-5-standard": {
+      "denominator": 1000000,
+      "rates": {"input_tokens": "1", "output_tokens": "5"},
+      "source": "https://platform.claude.com/docs/en/models/haiku-4-5/overview"
+    },
+    "haiku-5-5-standard": {
+      "denominator": 1000000,
+      "rates": {"input_tokens": "0.10", "output_tokens": "0.50"},
+      "long_prompt_over": 100000,
+      "long_rates": {"input_tokens": "0.50", "output_tokens": "2.50"},
+      "source": "https://platform.claude.com/docs/en/models/haiku-5-5/overview"
+    },
+    "vertex-gemini-3-8-flash-global-standard": {
+      "denominator": 1000000,
+      "rates": {"input_tokens": "0.75", "output_tokens": "3.75", "reasoning_tokens": "3.75"},
+      "service_region": "global",
+      "expires": "2026-12-31",
+      "source": "https://cloud.google.com/model-garden/pricing"
+    },
+    "vision-document-text": {
+      "denominator": 1000,
+      "rates": {"units": "1.50"},
+      "source": "https://cloud.google.com/vision/pricing"
+    },
+    "document-ai-enterprise-ocr": {
+      "denominator": 1000,
+      "rates": {"units": "1.50"},
+      "source": "https://cloud.google.com/products/document-ai/pricing"
+    }
+  }
+}
