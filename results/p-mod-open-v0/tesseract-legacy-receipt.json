@@ -1,0 +1,12 @@
+{
+  "aggregate_sha256": "431ad6129db85c13e37a9ee573524bb292a39a865d09a989c8c7e454d75a8c8e",
+  "carriers": 65,
+  "claim_sha256": "b81db888b099506a8d9a4eb05ce209bb08907008595610fc50cf8e5fa3c7decf",
+  "data_release_revision": "54d637d0f7f327597d67e4c474babec9586db33e",
+  "driver_sha256": "d20075f7222c8c634039c1f26ef238089c80c12aebfea018ed7a6d0df0d08418",
+  "registration_git_commit": "e9bf523064de30a0008a89c6e6508acc5dad1799",
+  "scorer_git_commit": "39ed8dddd37d9088edb72308c6f4497d6c627e2a",
+  "scoring_claim_sha256": "dc50f89d7ecb5c7cdd81841d2e5b2dc092082722f985137ef42b077e718b7f22",
+  "status": "complete",
+  "submission_sha256": "842cba14ae6964d14240c6a5acb60862827dcfce68b4a72a7168cb02afdd0357"
+}
