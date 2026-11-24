@@ -19,6 +19,21 @@ COLUMNS = ("reader_id", "platform", "execution", "status", "pages", "repetitions
            "api_input_usd_per_million", "api_output_usd_per_million", "api_usd_per_1000_units",
            "api_registration", "api_pages_per_minute", "api_mean_request_latency_seconds",
            "api_timed_pages", "api_timing_scope", "api_timing_label")
+REGISTERED_COLUMNS = COLUMNS + ("pages_per_minute_ci95", "peak_rss_mib_ci95", "api_pages_per_minute_ci95",
+                                "fully_loaded_usd_per_1000", "api_price_key", "api_service_region")
+
+
+def export_registered(path, output, *, allow_dry_run=False):
+    from registered_run import SCHEMA as REGISTERED_SCHEMA
+
+    receipt = json.loads(path.read_text())
+    if receipt["schema"] != REGISTERED_SCHEMA or (receipt["dry_run"] and not allow_dry_run):
+        raise ValueError("expected a registered efficiency receipt; DEV is excluded by default")
+    csv_output = csv.DictWriter(output, fieldnames=REGISTERED_COLUMNS, lineterminator="\n")
+    csv_output.writeheader()
+    for row in receipt["table"]:
+        csv_output.writerow({key: json.dumps(value, separators=(",", ":")) if isinstance(value, list) else value
+                             for key, value in row.items()})
 
 
 def read_receipt(path, label):
@@ -73,7 +88,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--external-only", action="store_true")
     parser.add_argument("--receipt-dir", type=Path, default=HERE / "receipts")
+    parser.add_argument("--registered-run", type=Path, help="export a decision 0030 JSON receipt")
+    parser.add_argument("--allow-dry-run", action="store_true", help="export a DEV receipt for inspection")
     args = parser.parse_args()
+    if args.registered_run:
+        if args.external_only:
+            parser.error("registered runs already carry their exact reader roster")
+        export_registered(args.registered_run, sys.stdout, allow_dry_run=args.allow_dry_run)
+        return
     receipts = {host: {} for host in PLATFORMS}
     for host in PLATFORMS:
         for path in sorted(args.receipt_dir.glob(f"{host}*.json")):
