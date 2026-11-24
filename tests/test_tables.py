@@ -2,8 +2,9 @@
 
 import unittest
 
-from heocr_bench.tables import (_Node, exact_match, grits, load_table, score_table, teds,
-                                tree_edit_distance)
+from heocr_bench.metrics import FOLDS, PROFILE_SHA, normalize
+from heocr_bench.tables import (_Node, _assign, cell_text, exact_match, grits, load_table, pool,
+                                score_document, score_table, teds, tree_edit_distance)
 
 
 def table(rows, cols, texts, header_rows=0, spans=()):
@@ -36,7 +37,7 @@ def mirrored(t):
 class TableFormatTests(unittest.TestCase):
     def test_uncovered_positions_are_filled_and_overlaps_rejected(self):
         rows, cols, _h, cells = load_table({"rows": 1, "cols": 2, "cells": [{"r": 0, "c": 0, "text": "x"}]})
-        self.assertEqual(cells, [(0, 0, 1, 1, "x"), (0, 1, 1, 1, "")])
+        self.assertEqual(cells, [(0, 0, 1, 1, "x", False), (0, 1, 1, 1, "", False)])
         with self.assertRaisesRegex(ValueError, "overlap"):
             load_table({"rows": 1, "cols": 2, "cells": [{"r": 0, "c": 0, "colspan": 2}, {"r": 0, "c": 1}]})
         with self.assertRaisesRegex(ValueError, "outside"):
@@ -149,6 +150,93 @@ class GritsTests(unittest.TestCase):
     def test_deterministic(self):
         pred = mirrored(GOLD)
         self.assertEqual(grits(GOLD, pred, "con"), grits(GOLD, pred, "con"))
+
+
+def masked(t, r, c):
+    out = dict(t)
+    out["cells"] = [dict(x, mask=True) if (x["r"], x["c"]) == (r, c) else x for x in t["cells"]]
+    return out
+
+
+class MaskTests(unittest.TestCase):
+    def test_masked_cell_text_is_ignored_but_structure_counts(self):
+        pred = table(3, 3, ["\u05e9\u05dd", "\u05db\u05de\u05d5\u05ea", "\u05de\u05d7\u05d9\u05e8",
+                            "\u05ea\u05e4\u05d5\u05d7", "2", "99.99",
+                            "\u05d0\u05d2\u05e1", "5", "3.20"], header_rows=1)
+        gold = masked(GOLD, 1, 2)
+        self.assertLess(teds(GOLD, pred), 1.0)
+        self.assertEqual(score_table(gold, pred),
+                         {"teds": 1.0, "teds_struct": 1.0, "grits_con": 1.0, "grits_top": 1.0, "exact": True})
+        wider = table(3, 4, ["\u05e9\u05dd", "\u05db\u05de\u05d5\u05ea", "\u05de\u05d7\u05d9\u05e8", "",
+                             "\u05ea\u05e4\u05d5\u05d7", "2", "99.99", "",
+                             "\u05d0\u05d2\u05e1", "5", "3.20", ""], header_rows=1)
+        self.assertFalse(exact_match(gold, wider))
+        self.assertLess(teds(gold, wider, content=False), 1.0)
+
+    def test_mask_must_be_boolean(self):
+        with self.assertRaisesRegex(ValueError, "boolean"):
+            load_table({"rows": 1, "cols": 1, "cells": [{"r": 0, "c": 0, "mask": "yes"}]})
+
+
+class NormaliserPinTests(unittest.TestCase):
+    """Cell text uses the registered page scorer's line_fold_v1 implementation."""
+
+    def test_folds_are_the_registered_line_fold_v1_table(self):
+        self.assertEqual(PROFILE_SHA[:8], "2e262710")
+        self.assertEqual({chr(k): v for k, v in FOLDS.items()}, {
+            "\u05be": "-", "\u05f3": "'", "\u05f4": '"', "\u201c": '"', "\u201d": '"', "\u201e": '"',
+            "\u2014": "\u2013"})
+
+    def test_cell_text_equals_page_normalize(self):
+        samples = ["\u200f\u05d0\u05be\u05d1", "\u05d2\u05f4\u05d3 \u2014 1\u20132",
+                   "\u05e9\u05b8\u05c1 x\n y", "\u201c\u05d0\u201d  \u202b\u05d1\u202c", ""]
+        for text in samples:
+            self.assertEqual(cell_text(text), normalize(text, FOLDS))
+        # Line breaks inside a cell fold to one space; en dash and hyphen stay distinct.
+        self.assertEqual(cell_text("a\nb"), "a b")
+        self.assertNotEqual(cell_text("1\u20132"), cell_text("1-2"))
+
+
+class DocumentTests(unittest.TestCase):
+    def test_hungarian_is_optimal_on_small_matrices(self):
+        import itertools
+        import random
+        rng = random.Random(7)
+        for _ in range(200):
+            n, m = rng.randint(1, 4), rng.randint(1, 4)
+            w = [[rng.choice([0.0, 0.2, 0.5, 0.9, 1.0]) for _ in range(m)] for _ in range(n)]
+            got = sum(w[i][j] for i, j in _assign(w).items())
+            best = max(sum(w[i][j] for i, j in zip(rows, cols))
+                       for k in range(min(n, m) + 1)
+                       for rows in itertools.permutations(range(n), k)
+                       for cols in itertools.permutations(range(m), k))
+            self.assertAlmostEqual(got, best)
+
+    def test_matching_respects_pages_and_scores_missing_tables_zero(self):
+        a = dict(table(1, 2, ["\u05d0", "1"]), pages=[1, 1])
+        b = dict(table(1, 2, ["\u05d1", "2"]), pages=[2, 3])
+        pred_b = dict(b, pages=[3, 3])
+        stray = dict(table(1, 2, ["\u05d0", "1"]), pages=[5, 5])
+        result = score_document([a, b], [stray, pred_b])
+        self.assertEqual(result["matched"], 1)
+        self.assertEqual(result["unmatched_predictions"], 1)
+        self.assertEqual(result["tables"][0]["teds"], 0.0)
+        self.assertEqual(result["tables"][1]["teds"], 1.0)
+
+    def test_pool_is_table_weighted_and_deterministic(self):
+        perfect = {"teds": 1.0, "teds_struct": 1.0, "grits_con": 1.0, "grits_top": 1.0, "exact": True}
+        zero = {"teds": 0.0, "teds_struct": 0.0, "grits_con": 0.0, "grits_top": 0.0, "exact": False}
+        docs = {"d1": {"tables": [perfect, perfect, perfect], "unmatched_predictions": 0},
+                "d2": {"tables": [zero], "unmatched_predictions": 2}}
+        out = pool(docs, seed=0, draws=500)
+        self.assertEqual(out["gold_tables"], 4)
+        self.assertEqual(out["unmatched_predictions"], 2)
+        self.assertAlmostEqual(out["teds"]["mean"], 0.75)
+        self.assertAlmostEqual(out["exact"]["mean"], 0.75)
+        lo, hi = out["teds"]["ci95"]
+        self.assertTrue(0.0 <= lo <= 0.75 <= hi <= 1.0)
+        self.assertEqual(out, pool(docs, seed=0, draws=500))
+        self.assertEqual(pool({}), {"status": "no_gold_tables"})
 
 
 if __name__ == "__main__":
