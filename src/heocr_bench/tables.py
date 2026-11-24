@@ -125,8 +125,12 @@ def _rename_cost(a, b, content):
     return Levenshtein.distance(a.text, b.text) / max(len(a.text), len(b.text))
 
 
-def tree_edit_distance(t1, t2, content=True):
-    """Zhang-Shasha tree edit distance; insert and delete cost 1."""
+def tree_edit_distance(t1, t2, content=True, rename=None):
+    """Zhang-Shasha tree edit distance; insert and delete cost 1.
+
+    ``rename(a, b)`` overrides the substitution cost (default: the TEDS td rule).
+    """
+    rename = rename or (lambda a, b: _rename_cost(a, b, content))
     n1, l1 = _postorder(t1)
     n2, l2 = _postorder(t2)
     keyroots1 = sorted({max(i for i in range(len(n1)) if l1[i] == v) for v in set(l1)})
@@ -147,7 +151,7 @@ def tree_edit_distance(t1, t2, content=True):
                     b = lj + y - 1
                     if l1[a] == li and l2[b] == lj:
                         fd[x][y] = min(fd[x - 1][y] + 1, fd[x][y - 1] + 1,
-                                       fd[x - 1][y - 1] + _rename_cost(n1[a], n2[b], content))
+                                       fd[x - 1][y - 1] + rename(n1[a], n2[b]))
                         td[a][b] = fd[x][y]
                     else:
                         fd[x][y] = min(fd[x - 1][y] + 1, fd[x][y - 1] + 1,
