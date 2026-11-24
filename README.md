@@ -54,6 +54,14 @@ one sequence element and is sensitive to line breaks. Line CER needs
 verified line joins, which v0 lacks. Filtered line error rate is unavailable
 because the mask is projected at the character level.
 
+## Table metrics
+
+`heocr_bench.tables` scores table structure: TEDS, TEDS-struct, GriTS-Con,
+GriTS-Top and exact match, on the `heocr_table.v1` format (logical column
+order, so right-to-left tables are never mirrored). See
+[docs/tables.md](docs/tables.md) for the exact definitions. No table set is
+registered yet.
+
 ## Efficiency
 
 The [v0 efficiency benchmark](efficiency/README.md) measures pages per minute,
