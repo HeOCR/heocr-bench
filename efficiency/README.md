@@ -16,6 +16,11 @@ inputs. Read efficiency and accuracy with those input scopes in view.
   and [reader settings](readers.json) pin the reader IDs, model assets
   and options for this run.
 
+The two-worker router sustained 20.15 pages/min on M4 and 12.59 on GitHub
+Ubuntu. Standalone Rivok Full sustained 60.44 and 57.82 pages/min on the same
+images. The M4 and router rows each use one pass. The Ubuntu external rows
+use the median of three passes.
+
 ## Measurement and price
 
 - A page is one carrier image. All available local readers process all 65
@@ -31,8 +36,8 @@ inputs. Read efficiency and accuracy with those input scopes in view.
   are measured wall time projected linearly. The M4 has no hourly rental
   price in this table. For Ubuntu the dollar estimate uses the standard
   2-core Linux rate of $0.36/h as a common proxy. Public standard jobs are
-  free. The external Ubuntu job and the private router job have different
-  CPU allocations, which the receipts record. Use measured hours with your
+  free. The external Ubuntu job had four vCPUs and the router job had two.
+  Use measured hours with your
   deployment's own rates. [GitHub runner pricing](https://docs.github.com/en/billing/reference/actions-runner-pricing)
   [GitHub runner hardware](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)
 - The Paddle CPU row times the pinned flagship wrapper and model with
