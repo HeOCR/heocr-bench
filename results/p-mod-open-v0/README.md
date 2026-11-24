@@ -6,14 +6,16 @@ These rows use the same 65 original rasters, 31 reference pages and 14 issue clu
 
 | Comparator | v0 disposition |
 | --- | --- |
-| Tessdata Best Hebrew | Complete, 65 carriers, original replay. |
-| Tessdata Fast Hebrew | Complete, 65 carriers, original replay. |
-| Rivok Tesseract Full | Complete, 65 carriers, original replay. It participated in part of reference construction. |
-| Rivok Tesseract Lite | Complete, 65 carriers, original replay. |
-| Rivok Paddle flagship | Complete, 65 carriers on CUDA, original replay. It participated in part of reference construction. |
+| Tessdata Best Hebrew | Complete, 65 carriers, original replay. Filtered CER 15.95%. |
+| Tessdata Fast Hebrew | Complete, 65 carriers, original replay. Filtered CER 15.74%. |
+| Rivok Tesseract Full | Complete, 65 carriers, original replay. Filtered CER 14.80%. It participated in part of reference construction. |
+| Rivok Tesseract Lite | Complete, 65 carriers, original replay. Filtered CER 15.44%. |
+| Rivok Paddle flagship | Complete, 65 carriers on CUDA, original replay. Filtered CER 17.85%. It participated in part of reference construction. |
 | Kraken 7.2 with PP-OCRv6 medium | Complete, 65 carriers, CPU. Filtered CER 79.06%, all-reference CER 78.64%. [Aggregate](kraken-7.2.json) · [Receipt](kraken-7.2-receipt.json). |
 | Tesseract legacy Hebrew | Complete, 65 carriers, CPU diagnostic. Filtered CER 24.35%, all-reference CER 28.55%. [Registration](tesseract-legacy-registration.md) · [Aggregate](tesseract-legacy.json) · [Receipt](tesseract-legacy-receipt.json). |
 | Qwen3-VL-2B-Instruct MLX 4-bit | Registered local vision-language diagnostic, execution pending aggregate. [Weights](https://huggingface.co/mlx-community/Qwen3-VL-2B-Instruct-4bit/tree/9c4f5209e57b31f4b9dfba735de3fb983739c9cc). |
+
+The table lists external readers. The release also includes five project lanes in the ten-reader replay and a separate HeOCR scanner-router subset. Existing external rows were reused. The additional local runs incurred $0 in incremental compute charges and needed no provider account.
 
 ## Eligibility gaps
 
