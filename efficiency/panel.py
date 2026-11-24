@@ -11,7 +11,7 @@ HERE = Path(__file__).resolve().parent
 DATASET_REVISION = "54d637d0f7f327597d67e4c474babec9586db33e"
 DATASET = f"https://huggingface.co/datasets/HeOCR/p-mod-open-v0/resolve/{DATASET_REVISION}"
 READERS = json.loads((HERE / "readers.json").read_text())
-LEADERBOARD_REVISION = "42469a88e7062590bb343949678474f043b6850c"
+LEADERBOARD_REVISION = json.loads((HERE / "leaderboard.json").read_text())["leaderboard_revision"]
 IMAGE_PATH = re.compile(r"images/pmod-\d{3}-(archive|issuer-render|phone-a|phone-b|scanner)\.(png|jpg)")
 
 

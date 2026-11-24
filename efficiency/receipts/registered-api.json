@@ -1,0 +1,45 @@
+{
+  "schema": "heocr.bench.registered-api.v1",
+  "readers": {
+    "gemini-vertex-v0": {
+      "registration": "#727",
+      "execution": "vertex-global-https",
+      "pages": 65,
+      "source_sha256": "4d488490824bcdbc7fc0bda0f91bcbfe41bfb78ca15ca52f318369943cd472d7",
+      "usage": null,
+      "timing": null
+    },
+    "claude-haiku-4-5-v0": {
+      "registration": "#732",
+      "execution": "anthropic-message-batch",
+      "pages": 65,
+      "source_sha256": "dcef481f5c3aa809b128d35a53f85367d37bdf3509d55a4a2ca797d10a683f72",
+      "usage": {"input_tokens": 105521, "output_tokens": 99261},
+      "timing": null
+    },
+    "claude-haiku-5-5-v0": {
+      "registration": "#732",
+      "execution": "anthropic-message-batch",
+      "pages": 65,
+      "source_sha256": "b2533d053262545d78bd89f163d96260b7e4735cb670a502c31710cc6dbed67e",
+      "usage": {"input_tokens": 202768, "output_tokens": 78584},
+      "timing": null
+    },
+    "google-vision-document-text-v0": {
+      "registration": "#732",
+      "execution": "vision-document-text-detection",
+      "pages": 65,
+      "source_sha256": "6c76284e3cbbd2dbde93161e3a7491297595b62a2e29e84e70c67fe3b095c04b",
+      "usage": {"units": 65},
+      "timing": null
+    },
+    "google-document-ai-ocr-v21-v0": {
+      "registration": "#735",
+      "execution": "document-ai-enterprise-ocr",
+      "pages": 65,
+      "source_sha256": "c683303a4ddec888c2a123863e0408ece9a564aaa378d9047115e4a8748f4f18",
+      "usage": {"units": 65},
+      "timing": null
+    }
+  }
+}

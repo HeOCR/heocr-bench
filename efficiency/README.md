@@ -50,14 +50,30 @@ use the median of three passes.
   issuer renders, and stock Rivok Full on archive. The benchmark uses two
   independent image workers and serializes complete records. The exact
   HeOCR commit and model digests are recorded.
-- Gemini uses Vertex global standard pricing. The November 2026 list price
-  is $0.75 per million input tokens and $3.75 per million output tokens
-  including reasoning, through December 31. The CSV includes both rates.
-  List price per 1,000 pages
-  equals `(0.75 × input + 3.75 × (output + reasoning)) / (1,000 × pages)`
-  for total measured tokens and completed pages. A `list-price-only` row
-  has no matched usage, wall time or client RSS receipt. Empty fields denote
-  unavailable or inapplicable measurements. [Vertex pricing](https://cloud.google.com/gemini-enterprise-agent-platform/generative-ai/pricing)
+## API timing from registered runs
+
+**from registered run; network-bound, not comparable to local CPU**
+
+API readers have one `registered-api` row each. The API timing columns use
+elapsed time or request latency recorded during the registered run. Batch
+wall time, when available, includes the provider queue. It yields batch
+throughput, with per-request latency reported separately when recorded. The
+timed-page count and scope describe the measurements as recorded. A blank
+timing or RSS field means the receipt lacks that measurement.
+
+List cost per 1,000 pages is recorded token or unit usage times the matching
+published rate, divided by the number of completed pages and scaled to 1,000.
+The Google OCR rates use the first paid tier before free quotas and credits.
+The Haiku rates follow the Message Batches SKU. The Gemini rate includes
+reasoning tokens at the output rate. Unit and token rates are beside the
+projected page cost. [Anthropic pricing](https://platform.claude.com/docs/en/about-claude/pricing)
+[Vision pricing](https://cloud.google.com/vision/pricing)
+[Document AI pricing](https://cloud.google.com/document-ai/pricing)
+[Vertex pricing](https://cloud.google.com/model-garden/pricing)
+
+The [aggregate API receipts](receipts/registered-api.json) cite the
+registered run and pin the source receipt. They contain usage, timing and
+coverage only. The exporter reads these files offline.
 
 ## Reproduce
 
@@ -81,15 +97,3 @@ routes. To generate both CSVs from verified receipts
 python efficiency/report.py > efficiency/efficiency.csv
 python efficiency/report.py --external-only > efficiency/external.csv
 ```
-
-For Gemini, project the official list rate from a matched Vertex
-`usageMetadata` receipt with `efficiency/quote.py`. Supply aggregate prompt,
-candidate and thought tokens separately and exclude cached-token pricing
-unless the request policy includes caching.
-
-To measure Gemini directly, use `efficiency/vertex_run.py` with an authorized
-Vertex project, a short-lived token in `HEOCR_BENCH_VERTEX_ACCESS_TOKEN`, the
-pinned OCR prompt file, expected response model version and a spend budget.
-This runs one sequential pass, with no automatic retries. It emits client
-timing, client RSS and aggregate token usage. Keep credentials in the runner
-environment. [Vertex response and token counts](https://docs.cloud.google.com/gemini-enterprise-agent-platform/reference/rest/v1beta1/GenerateContentResponse)

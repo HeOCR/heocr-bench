@@ -9,16 +9,16 @@ from pathlib import Path
 import sys
 
 from panel import DATASET_REVISION, HERE, panel, sha256
-from quote import quote
+from registered import read_registered
 from run import SCHEMA, metrics
-from vertex import PRICE_FILE, USAGE, price
 
 PLATFORMS = ("m4-cpu", "github-ubuntu-cpu")
-SCOPE = "public-v0-image-only"
 COLUMNS = ("reader_id", "platform", "execution", "status", "pages", "repetitions",
            "pages_per_minute", "peak_rss_mib", "marginal_usd_per_1000",
            "runner_hours_per_1000", "runner_usd_per_1000",
-           "api_input_usd_per_million", "api_output_usd_per_million")
+           "api_input_usd_per_million", "api_output_usd_per_million", "api_usd_per_1000_units",
+           "api_registration", "api_pages_per_minute", "api_mean_request_latency_seconds",
+           "api_timed_pages", "api_timing_scope", "api_timing_label")
 
 
 def read_receipt(path, label):
@@ -41,39 +41,30 @@ def read_receipt(path, label):
                              r["peak_rss_bytes"] <= 0 for r in trials):
             raise ValueError(f"incomplete receipt for {reader}")
         expected = metrics(trials, data["runner_usd_hour"])
-        if reader == "gemini-vertex-v0":
-            if len(trials) != 1 or data["vertex_pricing_sha256"] != sha256(PRICE_FILE):
-                raise ValueError("Vertex receipt requires one trial and the pinned price list")
-            usage = trials[0]["vertex_usage"]
-            expected["marginal_usd_per_1000"] = round(
-                float(quote(expected["pages"], *(usage[key] for key in USAGE), price())), 6
-            )
         if any(result[key] != value for key, value in expected.items()):
             raise ValueError(f"receipt metrics differ for {reader}")
     return data["readers"]
 
 
-def rows(receipts, external_only=False):
+def rows(receipts, api, external_only=False):
     roster = json.loads((HERE / "leaderboard.json").read_text())
     readers = [row["id"] for row in roster["readers"]]
+    if not api.keys() <= set(readers):
+        raise ValueError("registered API receipt reader missing from the leaderboard roster")
     if not external_only:
         readers.append("router-v2")
     for reader in readers:
+        if reader in api:
+            yield {"reader_id": reader, **api[reader]}
+            continue
         for host in PLATFORMS:
             result = receipts[host].get(reader)
-            mode = {"paddle": "onnx-cpu", "gemini-vertex-v0": "vertex-global-https",
-                    "router-v2": "2-image-workers"}.get(reader, "native-tesseract")
+            mode = {"paddle": "onnx-cpu", "router-v2": "2-image-workers"}.get(reader, "native-tesseract")
             if result:
                 status = "measured-cpu-variant" if reader == "paddle" else "measured"
-            elif reader == "gemini-vertex-v0":
-                status = "list-price-only"
             else:
                 status = "pending"
             fields = {key: result[key] for key in COLUMNS if result and key in result}
-            if reader == "gemini-vertex-v0":
-                prices = price()
-                fields["api_input_usd_per_million"] = prices["input_usd_per_million"]
-                fields["api_output_usd_per_million"] = prices["output_usd_per_million"]
             yield dict(reader_id=reader, platform=host, execution=mode, status=status,
                        repetitions=len(result["measurements"]) if result else None, **fields)
 
@@ -92,7 +83,11 @@ def main():
             receipts[host].update(data)
     output = csv.DictWriter(sys.stdout, fieldnames=COLUMNS, lineterminator="\n")
     output.writeheader()
-    output.writerows(rows(receipts, args.external_only))
+    api_path = args.receipt_dir / "registered-api.json"
+    if not api_path.is_file():
+        api_path = HERE / "receipts/registered-api.json"
+    api = read_registered(api_path)
+    output.writerows(rows(receipts, api, args.external_only))
 
 
 if __name__ == "__main__":
