@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "heocr-bench"
+version = "0.1.0"
+description = "Reproducible scoring for HeOCR benchmark submissions"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+dependencies = ["rapidfuzz==3.13.0"]
+
+[project.scripts]
+heocr-bench = "heocr_bench.cli:main"
+
+[project.urls]
+Repository = "https://github.com/HeOCR/heocr-bench"
+
+[tool.setuptools.package-data]
+heocr_bench = ["registry.json"]
