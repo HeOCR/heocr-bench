@@ -1,0 +1,35 @@
+{
+  "leaderboard_revision": "80edcc04fdaf3f8ab52e3e081ff57833929268fe",
+  "readers": [
+    {
+      "id": "tessdata-best",
+      "reader": "Tessdata Best Hebrew",
+      "version": "Tesseract 5.5.3 · tessdata_best dbaa827a"
+    },
+    {
+      "id": "tessdata-fast",
+      "reader": "Tessdata Fast Hebrew",
+      "version": "Tesseract 5.5.3 · tessdata_fast 11f9e43a"
+    },
+    {
+      "id": "rivok-full",
+      "reader": "Rivok Full",
+      "version": "Tesseract 5.5.3 · Rivok full 09ef1830"
+    },
+    {
+      "id": "rivok-lite",
+      "reader": "Rivok Lite",
+      "version": "Tesseract 5.5.3 · Rivok lite 59da073a"
+    },
+    {
+      "id": "paddle",
+      "reader": "PaddleOCR (CUDA)",
+      "version": "flagship c6bfad5d · CUDA · wrapper 3baae91a"
+    },
+    {
+      "id": "gemini-vertex-v0",
+      "reader": "Gemini (Vertex)",
+      "version": "Gemini 3.8 Flash"
+    }
+  ]
+}

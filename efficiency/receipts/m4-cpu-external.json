@@ -1,0 +1,148 @@
+{
+  "schema": "heocr.bench.efficiency.v1",
+  "dataset_revision": "54d637d0f7f327597d67e4c474babec9586db33e",
+  "image_manifest_sha256": "2bf85e3e8906ff97e68662069e09f59e0ff8703a9406c4002df5e9cf3e9789d8",
+  "reader_settings_sha256": "d0ac49b8a4a5f61ac08f965f21a368fb060a766a329a4a4cd831569b6ce41305",
+  "leaderboard_revision": "42469a88e7062590bb343949678474f043b6850c",
+  "heocr_revision": "abf3de1682b7e490d6ee764021ac220e94bb8136",
+  "runtime": {
+    "platform": "macOS-15.7.4-arm64-arm-64bit",
+    "machine": "arm64",
+    "logical_cpus": 16,
+    "python": "3.12.11",
+    "runner_image": null,
+    "runner_image_version": null,
+    "cpu": "Apple M4 Max",
+    "tesseract": [
+      "tesseract 5.5.3",
+      " leptonica-1.87.0",
+      "  libgif 5.2.2 : libjpeg 8d (libjpeg-turbo 3.1.3) : libpng 1.6.59 : libtiff 4.7.2 : zlib 1.2.12 : libwebp 1.6.0 : libopenjp2 2.5.4",
+      " Found NEON",
+      " Found libarchive 3.8.9 zlib/1.2.12 liblzma/5.8.4 bz2lib/1.0.8 liblz4/1.11.1 libzstd/1.5.7 expat/expat_2.7.3 CommonCrypto/system libb2/system",
+      " Found libcurl/8.7.1 SecureTransport (LibreSSL/3.3.6) zlib/1.2.12 nghttp2/1.64.0"
+    ],
+    "tesseract_sha256": "d3d15b31535c2dd88cbbb53ec54a16b9a739f4146e1648b4b6ad57cf5ce79f1d",
+    "paddle_runtime": {
+      "paddleocr-hebrew": "0.1.2",
+      "onnxruntime": "1.22.1",
+      "opencv-python": "4.12.0.88",
+      "numpy": "2.2.6",
+      "pyclipper": "1.3.0.post6"
+    },
+    "heocr_runtime": {
+      "heocr": "0.3.0a2",
+      "Pillow": "13.0.0",
+      "pypdfium2": "5.15.2",
+      "defusedxml": "0.7.1"
+    }
+  },
+  "runner_usd_hour": null,
+  "readers": {
+    "tessdata-best": {
+      "measurements": [
+        {
+          "seconds": 41.014734,
+          "peak_rss_bytes": 144244736,
+          "completed_by_carrier": {
+            "archive": 5,
+            "phone-a": 17,
+            "phone-b": 17,
+            "scanner": 17,
+            "issuer-render": 9
+          }
+        }
+      ],
+      "pages": 65,
+      "pages_per_minute": 95.0878,
+      "peak_rss_mib": 137.56,
+      "marginal_usd_per_1000": 0,
+      "runner_hours_per_1000": 0.175277,
+      "runner_usd_per_1000": null
+    },
+    "tessdata-fast": {
+      "measurements": [
+        {
+          "seconds": 32.177591,
+          "peak_rss_bytes": 113229824,
+          "completed_by_carrier": {
+            "archive": 5,
+            "phone-a": 17,
+            "phone-b": 17,
+            "scanner": 17,
+            "issuer-render": 9
+          }
+        }
+      ],
+      "pages": 65,
+      "pages_per_minute": 121.2024,
+      "peak_rss_mib": 107.98,
+      "marginal_usd_per_1000": 0,
+      "runner_hours_per_1000": 0.137511,
+      "runner_usd_per_1000": null
+    },
+    "rivok-full": {
+      "measurements": [
+        {
+          "seconds": 64.525404,
+          "peak_rss_bytes": 152535040,
+          "completed_by_carrier": {
+            "archive": 5,
+            "phone-a": 17,
+            "phone-b": 17,
+            "scanner": 17,
+            "issuer-render": 9
+          }
+        }
+      ],
+      "pages": 65,
+      "pages_per_minute": 60.4413,
+      "peak_rss_mib": 145.47,
+      "marginal_usd_per_1000": 0,
+      "runner_hours_per_1000": 0.27575,
+      "runner_usd_per_1000": null
+    },
+    "rivok-lite": {
+      "measurements": [
+        {
+          "seconds": 34.898241,
+          "peak_rss_bytes": 131776512,
+          "completed_by_carrier": {
+            "archive": 5,
+            "phone-a": 17,
+            "phone-b": 17,
+            "scanner": 17,
+            "issuer-render": 9
+          }
+        }
+      ],
+      "pages": 65,
+      "pages_per_minute": 111.7535,
+      "peak_rss_mib": 125.67,
+      "marginal_usd_per_1000": 0,
+      "runner_hours_per_1000": 0.149138,
+      "runner_usd_per_1000": null
+    },
+    "paddle": {
+      "measurements": [
+        {
+          "seconds": 226.348032,
+          "peak_rss_bytes": 1890582528,
+          "completed_by_carrier": {
+            "archive": 5,
+            "phone-a": 17,
+            "phone-b": 17,
+            "scanner": 17,
+            "issuer-render": 9
+          }
+        }
+      ],
+      "pages": 65,
+      "pages_per_minute": 17.2301,
+      "peak_rss_mib": 1803.0,
+      "marginal_usd_per_1000": 0,
+      "runner_hours_per_1000": 0.967299,
+      "runner_usd_per_1000": null
+    }
+  },
+  "source_receipt_sha256": "63c52079752d0d1ad7be7f69ba14ad4dda8c43845c65c1ce31a5470fca78ac34"
+}

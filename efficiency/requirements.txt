@@ -1,0 +1,4 @@
+psutil==7.2.2
+Pillow==11.3.0
+pypdfium2==5.15.2
+defusedxml==0.7.1
