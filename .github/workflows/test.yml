@@ -24,7 +24,7 @@ jobs:
       - name: Install the package in a clean environment
         run: |
           python -m venv .venv
-          .venv/bin/python -m pip install .
+          .venv/bin/python -m pip install '.[external]'
           .venv/bin/python -m pip check
       - name: Run pytest
         run: |
