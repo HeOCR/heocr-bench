@@ -117,10 +117,10 @@ def load_plan(path, digest, execute, allow_api=False):
         comparable = [{k: v for k, v in r.items() if k not in ("id", "ocr_layout")} for r in layout_arms]
         need(len(layout_arms) == 2 and {r["ocr_layout"] for r in layout_arms} == {"off", "v1"}
              and comparable[0] == comparable[1], "layout comparison requires identical settings and wheel except off/v1")
-        if execute:
-            needs_accuracy = {candidate, *comparisons}
-            need(not any(r["id"] in needs_accuracy for r in layout_arms),
-                 "layout diagnostics cannot replace the registered candidate or comparators")
+        layout_on = next(r["id"] for r in layout_arms if r["ocr_layout"] == "v1")
+        layout_off = next(r["id"] for r in layout_arms if r["ocr_layout"] == "off")
+        need(candidate == layout_on and layout_off not in comparisons,
+             "layout v1 must be the launch candidate and layout off cannot be a launch comparator")
     if c1:
         need(not execute or bool(comparisons), "registered #740 needs its eligible comparator roster")
         plan["m4_rates"] = c1_protocol.m4_rates(plan.get("m4_cost"), lambda item: pin_file(path.parent, item))
@@ -252,7 +252,7 @@ def measure(reader, pages, phase, turn, root, output, price, dry_run, timeout, *
                "billing_categories": list(price["rates"]) if api else []}
     retained = None
     if c1:
-        if turn == 1 and not dry_run and "ocr_layout" not in reader:
+        if turn == 1 and not dry_run:
             retained = output / f"{reader['id']}.first"
             retained.mkdir(mode=0o700)
         payload.update(protocol=c1_protocol.PROTOCOL, ocr_layout=reader.get("ocr_layout", "off"),

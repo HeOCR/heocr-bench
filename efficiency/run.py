@@ -16,7 +16,7 @@ from panel import DATASET_REVISION, HERE, LEADERBOARD_REVISION, READERS, panel, 
 
 TESSERACT_ENV = dict(OMP_THREAD_LIMIT="1", VECLIB_MAXIMUM_THREADS="1", OPENBLAS_NUM_THREADS="1")
 CAPTURES = {"phone-a": "iphone", "phone-b": "pixel", "archive": "scanner",
-            "scanner": "scanner", "issuer-render": "issuer-render"}
+            "scanner": "scanner", "issuer-render": "issuer-render", "issuer-scan": "scanner"}
 MODEL = {"iphone": "heocr_modern_v1", "pixel": "heocr_modern_v1",
          "scanner": "heb_rivok", "issuer-render": "heb_rivok"}
 SCHEMA = "heocr.bench.efficiency.v1"
