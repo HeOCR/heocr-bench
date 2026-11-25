@@ -28,6 +28,8 @@ def ordered_cpu(telemetry, assets, settings):
         path = Path(page["path"])
         if backend == "heocr":
             options = router_options(assets, page["carrier"], layout="v1" if layout == "v1" else None)
+            options.update(repairs=True, ocr=True, ocr_lang="heb", ocr_psm=3,
+                           force_ocr=True, check_numbers="suspect", max_pages=1, time_limit=None)
             text, used_v6 = router_output(heocr.extract(path, **options), settings, options)
             return text.encode(), used_v6
         if backend == "paddle-cpu":

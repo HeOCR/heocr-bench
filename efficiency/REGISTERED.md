@@ -222,8 +222,9 @@ Give them distinct arm IDs and set `ocr_layout` to `"off"` and `"v1"`. The
 runner verifies the imported package bytes against the wheel before timing.
 Use an installed wheel from the #208 build for both arms. The adapter uses
 the existing capture and model rules with the layout option forwarded
-per page. These diagnostic arms stay outside the eligible comparison roster
-in a registered C1 execution.
+per page. For C1 v1, set `candidate` to the layout-v1 arm. The layout-off
+arm has zero launch weight and stays outside `comparators`. The repeat-1
+artifact from each arm supports the paired layout report.
 
 For an approved registered run, the job provides `accuracy_output_dir`
 on repeat 1 for the accuracy lanes. After validating and serializing each

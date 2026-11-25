@@ -124,10 +124,21 @@ def test_layout_pair_requires_same_build_and_settings(tmp_path):
                heocr_wheel={"path": wheel.name, "sha256": sha256(wheel)})
     on = dict(off, id="layout", ocr_layout="v1")
     plan["readers"] = [off, on, plan["readers"][1]]
+    plan["candidate"] = on["id"]
     path.write_text(json.dumps(plan))
     loaded, _ = load_plan(path, sha256(path), False)
     assert loaded["m4_rates"]["amortization_usd_hour"] == "1"
     assert [r.get("ocr_layout") for r in loaded["readers"]] == ["off", "v1", None]
+    plan["comparators"].append(off["id"])
+    path.write_text(json.dumps(plan))
+    with pytest.raises(ValueError, match="layout off cannot be a launch comparator"):
+        load_plan(path, sha256(path), False)
+    plan["comparators"].pop()
+    plan["candidate"] = off["id"]
+    path.write_text(json.dumps(plan))
+    with pytest.raises(ValueError, match="layout v1 must be the launch candidate"):
+        load_plan(path, sha256(path), False)
+    plan["candidate"] = on["id"]
     on["argv"] = ["another-runtime"]
     path.write_text(json.dumps(plan))
     with pytest.raises(ValueError, match="identical settings and wheel"):
@@ -142,7 +153,8 @@ def test_only_first_authorized_repeat_persists_outputs(tmp_path):
         "from time import sleep; t=Telemetry(); sleep(0.08); "
         "t.save_first_output('invented', b''); t.complete('invented')"
     )
-    reader = {"id": "local", "kind": "local", "concurrency": 2, "argv": [sys.executable, "-c", script]}
+    reader = {"id": "local", "kind": "local", "concurrency": 2, "ocr_layout": "off",
+              "argv": [sys.executable, "-c", script]}
     args = (reader, [page], "trial")
     first = measure(*args, 1, tmp_path, tmp_path, None, False, 3, c1=True)
     second = measure(*args, 2, tmp_path, tmp_path, None, False, 3, c1=True)
@@ -156,7 +168,7 @@ def test_layout_adapter_applies_effective_options_in_manifest_order(monkeypatch,
     from run import CAPTURES, MODEL
 
     pages = [{"id": carrier, "carrier": carrier, "path": str(tmp_path/carrier)}
-             for carrier in ("issuer-render", "scanner", "phone-a", "archive")]
+             for carrier in ("issuer-render", "scanner", "phone-a", "archive", "issuer-scan", "phone-b")]
     settings = {"runtime": "heocr", "models": dict(heb_rivok="a", heocr_modern_v1="b", v6="c")}
     received = {}
 
@@ -182,6 +194,12 @@ def test_layout_adapter_applies_effective_options_in_manifest_order(monkeypatch,
         assert written == [(p["id"], p["id"].encode()) for p in pages]
         assert all(received[p["id"]]["ocr_capture_type"] == CAPTURES[p["carrier"]] for p in pages)
         assert all(received[p["id"]].get("ocr_layout") == (None if layout == "off" else "v1") for p in pages)
+        assert {key for key, options in received.items() if options["ocr_line_v6"] is not None} == {
+            "issuer-render", "scanner"
+        }
+        assert all(options["force_ocr"] and options["ocr_psm"] == 3 and options["max_pages"] == 1
+                   and options["check_numbers"] == "suspect" and options["repairs"] and not options["convert"]
+                   for options in received.values())
 
 
 def test_imported_package_must_match_layout_wheel(tmp_path, monkeypatch):
