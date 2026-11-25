@@ -5,6 +5,7 @@ from importlib.metadata import version
 import json
 from pathlib import Path
 
+from . import external
 from .data import load_carriers, load_submission, split_descriptor
 from .metrics import LANES
 from .scoring import replay_comparison, score_submission
@@ -21,7 +22,10 @@ def main(argv=None):
         command.add_argument("--split", default="test")
         command.add_argument("--preds", type=Path, required=True)
         command.add_argument("--data", type=Path, help="Use a local copy of the same pinned public bundle")
+    external.add_command(commands)
     args = parser.parse_args(argv)
+    if args.command == "external":
+        return external.run(args, parser)
     try:
         descriptor = split_descriptor(args.set_id, args.split)
         carriers = load_carriers(descriptor, args.data)

@@ -54,6 +54,12 @@ one sequence element and is sensitive to line breaks. Line CER needs
 verified line joins, which v0 lacks. Filtered line error rate is unavailable
 because the mask is projected at the character level.
 
+## External Hebrew OCR
+
+The [external benchmark harness](docs/external/README.md) reads native Pinkas
+PAGE XML, CHURRO Hebrew Parquet and BiblIA ALTO. It runs local readers and emits
+scores separately from the registered HeOCR benchmarks.
+
 ## Table metrics
 
 `heocr_bench.tables` scores table structure: TEDS, TEDS-struct, GriTS-Con,
