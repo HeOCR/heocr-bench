@@ -412,6 +412,11 @@ def lane_marker():
                          "models": hf_revisions("datalab-to/indra-ocr"), "options": {"renderer": "json", "defaults": True}}
 
 
+# The release default for mineru 4.2.3 (registered by name, restricted-eval amendment 5).
+MINERU_BACKEND = "hybrid/VLM"
+MINERU_VLM = "MinerU2.5-Pro-2605-1.2B"
+
+
 def lane_mineru():
     """MinerU, local ``mineru-kit parse`` with the release defaults (tier and OCR mode chosen by MinerU);
     tables from the middle JSON's table blocks (their HTML)."""
@@ -430,7 +435,8 @@ def lane_mineru():
         return out
     return run, lambda: {"versions": versions("mineru", "torch", "transformers"), "models": _mineru_models(),
                          "options": {"command": "mineru-kit parse -f middle_json", "tier": "release default",
-                                     "ocr_mode": "auto (default)", "remote": False}}
+                                     "backend": MINERU_BACKEND, "vlm_model": MINERU_VLM, "ocr_mode": "auto (default)",
+                                     "remote": False}}
 
 
 def _html_values(node):

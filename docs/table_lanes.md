@@ -44,7 +44,8 @@ Lane details:
   `pred_html`. PaddleOCR 3.7 ships no Hebrew recognition model, so cell text comes from the release's
   default OCR.
 - **`mineru`** runs `mineru-kit parse -f middle_json` locally, never with `--remote`. It uses the
-  release's default tier and OCR mode, and reads the table HTML in the middle JSON.
+  release's default tier and OCR mode, and reads the table HTML in the middle JSON. For 4.2.3
+  that default is the `hybrid/VLM` backend with `MinerU2.5-Pro-2605-1.2B`; the receipt records both by name.
 
 The harness sets `HF_HUB_DISABLE_TELEMETRY`, `MINERU_TELEMETRY_DISABLED` and `DO_NOT_TRACK`.
 
